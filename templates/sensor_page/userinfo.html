@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>사용자 : {{ username }}</title>
+</head>
+<body>
+<h1>사용자 : {{ username }}</h1>
+<strong>전화번호 정보</strong>
+{% if phone_numbers %}
+    {% for number in phone_numbers %}
+    <li>{{ number }}</li>
+    {% endfor %}
+{% else %}
+    <strong>전화번호가 등록되지 않았습니다.</strong>
+{% endif %}
+<br/>
+{% if sensor_nodes %}
+    그래프 :
+    <a href="/sensor/userinfo/hour/">1시간</a>
+    <a href="/sensor/userinfo/day/">하루</a>
+    <a href="/sensor/userinfo/week/">일주일</a>
+    <a href="/sensor/userinfo/month/">한달</a>
+    <a href="/sensor/userinfo/year/">1년</a>
+    <br/>
+    <br/>
+    {% for sensor_node in sensor_nodes %}
+        <strong>{{ sensor_node.name }} : MAC({{ sensor_node.mac_address }}) : 보고주기({{ sensor_node.reporting_period }}초) : 정지시 알람({{ sensor_node.warning_period }}초)</strong><br/>
+        <br/>
+        {% for sensor in sensors %}
+            {% if sensor.sensor_node == sensor_node %}
+                형식 :
+                {% if sensor.type == 0 %}
+                    온도
+                {% endif %}
+                {% if sensor.type == 1 %}
+                    습도
+                {% endif %}
+                <br/>
+                제한({{ sensor.low_threshold }} ~ {{ sensor.high_threshold }})
+                <br/>
+
+                {% if sensor.pic %}
+                    {{ sensor.pic|safe }}
+                {% endif %}
+                <br/>
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
+{% else %}
+    <strong>센서노드가 등록되지 않았습니다.</strong>
+{% endif %}
+
+</body>
+</html>
