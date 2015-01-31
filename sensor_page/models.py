@@ -2,12 +2,13 @@
 
 from django.db import models
 from django.contrib.auth.models import User
+import datetime
 import pytz
 
 
 class UserInfo(models.Model):
     user = models.ForeignKey(User)
-    expire_date = models.DateField()
+    expire_date = models.DateField(default=datetime.date(datetime.MAXYEAR, 12, 31), null=True)
 
     TZ_CHOICES = [(tz, tz) for tz in pytz.all_timezones]
     timezone = models.CharField(max_length=30, default='Asia/Seoul', choices=TZ_CHOICES)
@@ -31,8 +32,8 @@ class SensorNode(models.Model):
     reporting_period = models.IntegerField(default=600)
     warning_period = models.IntegerField(default=3600, null=True)
     last_update = models.DateTimeField(auto_now_add=True)
-    last_warning_date = models.DateTimeField(null=True)
-    warning_count = models.IntegerField(null=True)
+    last_warning_date = models.DateTimeField(auto_now_add=True, null=True)
+    warning_count = models.IntegerField(default=0, null=True)
 
     def __unicode__(self):
         return self.user.username + u':' + self.name
@@ -46,8 +47,8 @@ class Sensor(models.Model):
         (1, '습도'),
     )
     type = models.IntegerField(choices=SENSOR_TYPE_CHOICES)
-    high_threshold = models.FloatField(null=True)
-    low_threshold = models.FloatField(null=True)
+    high_threshold = models.FloatField(default=1000.0, null=True)
+    low_threshold = models.FloatField(default=-1000.0, null=True)
 
     def __unicode__(self):
         repr = self.sensor_node.user.username + ':'

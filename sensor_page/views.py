@@ -4,7 +4,6 @@ from django.contrib.auth import authenticate, login
 
 from django.template import RequestContext
 from django.shortcuts import render_to_response, redirect
-from django.http import HttpResponse
 
 from sensor_page.models import *
 from sensor_page.forms import *
@@ -14,6 +13,11 @@ import datetime
 
 import os
 import StringIO
+from munjanara_sms import send_sms
+
+import logging
+
+
 os.environ["MATPLOTLIBDATA"] = os.getcwdu()
 os.environ["MPLCONFIGDIR"] = os.getcwdu()
 import subprocess
@@ -95,7 +99,7 @@ def settings(request):
         return render_to_response('sensor_page/settings.html', {'form': form}, context)
 
 
-def loginpage(request):
+def login_page(request):
     context = RequestContext(request)
 
     if request.method == 'POST':
@@ -106,7 +110,7 @@ def loginpage(request):
         if not user:
             return render_to_response('sensor_page/nouser.html')
         if not user.is_active:
-            return render_to_response('isensor_page/nact_user.html')
+            return render_to_response('sensor_page/inact_user.html')
         login(request, user)
         return redirect('/sensor/userinfo/')
 
@@ -124,6 +128,34 @@ def get_client_ip(request):
     return ip
 
 
+def check_range(measure):
+    sensor = measure.sensor
+
+    report = False
+    if measure.value > sensor.high_threshold:
+        report = True
+    elif measure.value < sensor.low_threshold:
+        report = True
+
+    if report:
+        text = u'범위를 넘었습니다. '
+        text += sensor.sensor_node.name
+        text += u' : '
+        if sensor.type == 0:
+            text += u'온도 : '
+        else:
+            text += u'습도 : '
+        text += str(measure.value)
+
+        try:
+            user_info = UserInfo.objects.get(user=sensor.sensor_node.user)
+            user_contacts = UserContact.objects.filter(user_info=user_info)
+            for contact in user_contacts:
+                send_sms(contact.phone_number, text)
+                logging.info("sent sms to sensor.sensor_node.user")
+        except UserInfo.DoesNotExist:
+            pass
+
 def input(request):
     context = RequestContext(request)
 
@@ -138,7 +170,7 @@ def input(request):
         if not user:
             return render_to_response('sensor_page/nouser.html')
         if not user.is_active:
-            return render_to_response('sensor_page/nact_user.html')
+            return render_to_response('sensor_page/inact_user.html')
 
         sensor_node = SensorNode.objects.get(mac_address=request.POST['mac_address'])
         sensor = Sensor.objects.get(sensor_node=sensor_node, type=int(request.POST['type']))
@@ -151,6 +183,8 @@ def input(request):
 
         sensor_node.last_update = measure.date
         sensor_node.save()
+
+        check_range(measure)
 
         return render_to_response('sensor_page/saved.html')
 
@@ -167,7 +201,7 @@ class UtcTzinfo(datetime.tzinfo):
 
 
 def dynamic_png(sensor_id, format):
-    #ToDo : Set the border
+    #ToDo : read only required entries from the DB
     try:
         sensor = Sensor.objects.get(pk=sensor_id)
         try:
@@ -182,9 +216,13 @@ def dynamic_png(sensor_id, format):
 
     dates = []
     values = []
+    highs = []
+    lows = []
 
-    highs = [measure_entries[0].sensor.high_threshold, measure_entries[0].sensor.high_threshold]
-    lows = [measure_entries[0].sensor.low_threshold, measure_entries[0].sensor.low_threshold]
+    if measure_entries[0].sensor.high_threshold != 1000.0:
+        highs = [measure_entries[0].sensor.high_threshold, measure_entries[0].sensor.high_threshold]
+    if measure_entries[0].sensor.low_threshold != -1000.0:
+        lows = [measure_entries[0].sensor.low_threshold, measure_entries[0].sensor.low_threshold]
 
     ymax = highs[0] + 10
     ymin = lows[0] - 10
@@ -197,36 +235,37 @@ def dynamic_png(sensor_id, format):
         measure.date += tz.utcoffset(measure.date)
         dates.append(measure.date)
         values.append(measure.value)
-        if measure.value > highs[0]:
+        if measure.value > ymax:
             ymax = measure.value + 10
-        elif measure.value < lows[0]:
+        elif measure.value < ymin:
             ymin = measure.value - 10
 
     highs = [measure_entries[0].sensor.high_threshold, measure_entries[0].sensor.high_threshold]
     lows = [measure_entries[0].sensor.low_threshold, measure_entries[0].sensor.low_threshold]
 
+    date_max = datetime.datetime.utcnow()
+    date_max += tz.utcoffset(date_max)
+
     try:
         fig, ax = plt.subplots()
         ax.plot_date(dates, values,linestyle='solid', color='blue')
 
-        date_max = dates[-1]
         if format == "hour":
-            delta = datetime.timedelta(hours = 1)
-            def xformat(x):
-                return '%d:%d'%(x.hour, x.minute)
-            ax.format_xdata = xformat
+            delta = datetime.timedelta(hours=1)
         elif format == "day":
-            delta = datetime.timedelta(days = 1)
+            delta = datetime.timedelta(days=1)
         elif format == "week":
-            delta = datetime.timedelta(weeks = 1)
+            delta = datetime.timedelta(weeks=1)
         elif format == "month":
             delta = datetime.timedelta(weeks=4)
         else:
-            delta = datetime.timedelta(days = 365)
+            delta = datetime.timedelta(days=365)
         date_min = date_max - delta
 
-        ax.plot_date([date_min, date_max], highs, linestyle='solid', color='red', linewidth=3, marker="")
-        ax.plot_date([date_min, date_max], lows, linestyle='solid', color='red', linewidth=3, marker="")
+        if highs:
+            ax.plot_date([date_min, date_max], highs, linestyle='solid', color='red', linewidth=3, marker="")
+        if lows:
+            ax.plot_date([date_min, date_max], lows, linestyle='solid', color='red', linewidth=3, marker="")
 
         ax.set_xlim(date_min, date_max)
         ax.set_ylim(ymin, ymax)
@@ -242,9 +281,10 @@ def dynamic_png(sensor_id, format):
     finally:
         plt.clf()
 
+
 def userinfo(request, format="day"):
     if not request.user.is_authenticated():
-        return render_to_response('sensor_page/nouser.html')
+        return redirect('/sensor/login/')
 
     context = RequestContext(request)
 

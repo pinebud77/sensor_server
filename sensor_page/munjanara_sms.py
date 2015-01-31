@@ -1,5 +1,6 @@
 import urllib
 import urllib2
+import logging
 
 
 def send_sms(receiver, message):
@@ -9,8 +10,9 @@ def send_sms(receiver, message):
         'passwd': 'shfur2@@',
         'sender': '01090344820',
         'receiver': receiver,
-        'message': message,
+        'message': message.encode('EUC-KR'),
         }
     data = urllib.urlencode(values)
     req = urllib2.Request(url, data)
     response = urllib2.urlopen(req)
+    logging.error(response.read)

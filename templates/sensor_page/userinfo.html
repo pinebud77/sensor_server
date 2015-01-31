@@ -37,7 +37,19 @@
                     습도
                 {% endif %}
                 <br/>
-                제한({{ sensor.low_threshold }} ~ {{ sensor.high_threshold }})
+                제한(
+                {% if sensor.low_threshold != -1000.0 %}
+                {{ sensor.low_threshold }}
+                {% else %}
+                없음
+                {% endif %}
+                ~
+                {% if sensor.high_threshold != 1000.0 %}
+                {{ sensor.high_threshold }}
+                {% else %}
+                없음
+                {% endif %}
+                )
                 <br/>
 
                 {% if sensor.pic %}

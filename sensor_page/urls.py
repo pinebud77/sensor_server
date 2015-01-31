@@ -2,7 +2,7 @@ from django.conf.urls import patterns, url
 from sensor_page import views
 
 urlpatterns = patterns('',
-                       url(r'^login/', views.loginpage),
+                       url(r'^login/', views.login_page),
                        url(r'^userinfo/(?P<format>\w+)/', views.userinfo),
                        url(r'^userinfo/', views.userinfo),
                        url(r'^input/', views.input),
