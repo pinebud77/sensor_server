@@ -160,13 +160,14 @@ def input(request):
 
 
 class UtcTzinfo(datetime.tzinfo):
-  def utcoffset(self, dt): return datetime.timedelta(0)
-  def dst(self, dt): return datetime.timedelta(0)
-  def tzname(self, dt): return 'UTC'
-  def olsen_name(self): return 'UTC'
+    def utcoffset(self, dt): return datetime.timedelta(0)
+    def dst(self, dt): return datetime.timedelta(0)
+    def tzname(self, dt): return 'UTC'
+    def olsen_name(self): return 'UTC'
 
 
 def dynamic_png(sensor_id, format):
+    #ToDo : Set the border
     try:
         sensor = Sensor.objects.get(pk=sensor_id)
         try:

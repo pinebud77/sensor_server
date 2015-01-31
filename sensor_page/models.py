@@ -31,6 +31,8 @@ class SensorNode(models.Model):
     reporting_period = models.IntegerField(default=600)
     warning_period = models.IntegerField(default=3600, null=True)
     last_update = models.DateTimeField(auto_now_add=True)
+    last_warning_date = models.DateTimeField(null=True)
+    warning_count = models.IntegerField(null=True)
 
     def __unicode__(self):
         return self.user.username + u':' + self.name
