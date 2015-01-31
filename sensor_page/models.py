@@ -60,9 +60,9 @@ class Sensor(models.Model):
         repr = self.sensor_node.user.username + ':'
         repr += self.sensor_node.name + ':'
         if self.type == 0:
-            repr += '(' + '온도' + ')'
+            repr += u'(온도)'
         elif self.type == 1:
-            repr += '(' + '습도' + ')'
+            repr += u'(습도)'
         return repr
 
 

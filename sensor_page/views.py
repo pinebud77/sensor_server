@@ -150,10 +150,10 @@ def check_first_and_resume(measure):
     if first or resume:
         if first:
             text = u'센서가 첫 데이터를 보냈습니다. : '
-            logging.info(u'sent SMS for the first data : ' + sensor_node.user.userid + ':' + sensor_node.name)
+            logging.info(u'sent SMS for the first data : ' + sensor_node.user.username+ ':' + sensor_node.name)
         else:
             text = u'센서가 다시 데이터를 보냈습니다. : '
-            logging.info(u'sent SMS for the resume report : ' + sensor_node.user.userid + ':' + sensor_node.name)
+            logging.info(u'sent SMS for the resume report : ' + sensor_node.user.username + ':' + sensor_node.name)
         text += sensor_node.name + u' : '
         if measure.sensor.type == 0:
             text += u'온도 : '
@@ -168,7 +168,7 @@ def check_first_and_resume(measure):
                 send_sms(contact.phone_number, text)
                 logging.info(u'sent SMS')
         except UserInfo.DoesNotExist:
-            logging.error(u'User info was not specified : ' + sensor_node.user.userid)
+            logging.error(u'User info was not specified : ' + sensor_node.user.username)
 
     return first or resume
 
@@ -419,7 +419,7 @@ def cron_job(request):
 
                     logging.info(u'Sent SMS for dead sensor : ' + unicode(sensor_node))
                 except UserInfo.DoesNotExist:
-                    logging.error(u'no user information for dead sensor : ' + sensor_node.user.userid)
+                    logging.error(u'no user information for dead sensor : ' + sensor_node.user.username)
 
     logging.info('cronjob finished')
     return render_to_response('sensor_page/cronjobdone.html')
