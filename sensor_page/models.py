@@ -14,7 +14,13 @@ class UserInfo(models.Model):
     timezone = models.CharField(max_length=30, default='Asia/Seoul', choices=TZ_CHOICES)
 
     def __unicode__(self):
-        return self.user.username + u' (만료 : ' + unicode(self.expire_date) + u')'
+        desc = self.user.username + u' (만료 : ' + unicode(self.expire_date) + u') '
+        try:
+            for contact in UserContact.objects.filter(user_info=self):
+                desc += contact.phone_number + u' '
+        except UserContact.DoesNotExist:
+            pass
+        return desc
 
 
 class UserContact(models.Model):
@@ -36,7 +42,7 @@ class SensorNode(models.Model):
     warning_count = models.IntegerField(default=0, null=True)
 
     def __unicode__(self):
-        return self.user.username + u':' + self.name
+        return self.user.username + u' ' + self.name + u' MAC(' + self.mac_address + u') warning(' + unicode(self.warning_count) + u')'
 
 
 class Sensor(models.Model):
@@ -54,9 +60,9 @@ class Sensor(models.Model):
         repr = self.sensor_node.user.username + ':'
         repr += self.sensor_node.name + ':'
         if self.type == 0:
-            repr += '(' + 'Thermal' + ')'
+            repr += '(' + '온도' + ')'
         elif self.type == 1:
-            repr += '(' + 'Humidity' + ')'
+            repr += '(' + '습도' + ')'
         return repr
 
 

@@ -133,6 +133,46 @@ def get_client_ip(request):
     return ip
 
 
+def check_first_and_resume(measure):
+    first = False
+    resume = False
+
+    measures_count = MeasureEntry.objects.filter(sensor=measure.sensor).count()
+    if measures_count <= 1:
+        first = True
+
+    sensor_node = measure.sensor.sensor_node
+    if sensor_node.warning_count:
+        sensor_node.warning_count = 0
+        sensor_node.save()
+        resume = True
+
+    if first or resume:
+        if first:
+            text = u'센서가 첫 데이터를 보냈습니다. : '
+            logging.info(u'sent SMS for the first data : ' + sensor_node.user.userid + ':' + sensor_node.name)
+        else:
+            text = u'센서가 다시 데이터를 보냈습니다. : '
+            logging.info(u'sent SMS for the resume report : ' + sensor_node.user.userid + ':' + sensor_node.name)
+        text += sensor_node.name + u' : '
+        if measure.sensor.type == 0:
+            text += u'온도 : '
+        else:
+            text += u'습도 : '
+        text += str(measure.value)
+
+        try:
+            user_info = UserInfo.objects.get(user=sensor_node.user)
+            user_contacts = UserContact.objects.filter(user_info=user_info)
+            for contact in user_contacts:
+                send_sms(contact.phone_number, text)
+                logging.info(u'sent SMS')
+        except UserInfo.DoesNotExist:
+            logging.error(u'User info was not specified : ' + sensor_node.user.userid)
+
+    return first or resume
+
+
 def check_range(measure):
     sensor = measure.sensor
 
@@ -157,9 +197,11 @@ def check_range(measure):
             user_contacts = UserContact.objects.filter(user_info=user_info)
             for contact in user_contacts:
                 send_sms(contact.phone_number, text)
-                logging.info(u'sent SMS on the range error : ' + unicode(sensor))
+                logging.info(u'sent SMS on the range error : ' + sensor.sensor_node.name)
         except UserInfo.DoesNotExist:
-            pass
+            logging.error(u'User info was not specified : ' + sensor_node.user.userid)
+
+    return report
 
 def input(request):
     context = RequestContext(request)
@@ -187,12 +229,12 @@ def input(request):
         measure.save()
 
         sensor_node.last_update = measure.date
-        sensor_node.warning_count = 0
         sensor_node.save()
 
+        check_first_and_resume(measure)
         check_range(measure)
 
-        logging.debug(u'measurement saved : ' + unicode(measure))
+        logging.debug(u'measurement saved : ' + sensor.sensor_node.name + ':' + sensor.type)
 
         return render_to_response('sensor_page/saved.html')
 
@@ -354,8 +396,8 @@ def cron_job(request):
         if sensor_node.last_update.replace(tzinfo=None) < now - datetime.timedelta(seconds=sensor_node.warning_period):
             logging.debug(u'sensor node did not report : ' + unicode(sensor_node))
             report = False
-            if sensor_node.warning_count > 3:
-                continue
+            if sensor_node.warning_count + 1 > 3:
+                report = False
             elif sensor_node.warning_count == 0:
                 report = True
             elif sensor_node.last_warning_date.replace(tzinfo=None) < now - datetime.timedelta(seconds=sensor_node.warning_period):
@@ -363,7 +405,7 @@ def cron_job(request):
 
             if report:
                 message = u'센서가 %d초동안 정보를 보내지 않았습니다. (%d/%d) (' % (sensor_node.warning_period, sensor_node.warning_count+1, 3)
-                message += unicode(sensor_node)
+                message += sensor_node.user.userid + u':' + sensor_node.name
                 message += u')'
                 try:
                     user_info = UserInfo.objects.get(user=sensor_node.user)
@@ -377,7 +419,7 @@ def cron_job(request):
 
                     logging.info(u'Sent SMS for dead sensor : ' + unicode(sensor_node))
                 except UserInfo.DoesNotExist:
-                    logging.error(u'no user information for dead sensor : ' + sensor_node)
+                    logging.error(u'no user information for dead sensor : ' + sensor_node.user.userid)
 
     logging.info('cronjob finished')
     return render_to_response('sensor_page/cronjobdone.html')

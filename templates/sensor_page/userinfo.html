@@ -54,6 +54,8 @@
 
                 {% if sensor.pic %}
                     {{ sensor.pic|safe }}
+                {% else %}
+                    센서가 아직 데이터를 보내지 않았습니다.
                 {% endif %}
                 <br/>
             {% endif %}

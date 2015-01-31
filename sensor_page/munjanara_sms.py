@@ -2,6 +2,7 @@ import urllib
 import urllib2
 import logging
 
+#ToDo : handle unformate phone number
 
 def send_sms(receiver, message):
     url = 'http://www.munjanara.co.kr/MSG/send/web_admin_send.htm'
