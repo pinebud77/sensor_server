@@ -234,7 +234,7 @@ def input(request):
         check_first_and_resume(measure)
         check_range(measure)
 
-        logging.debug(u'measurement saved : ' + sensor.sensor_node.name + ':' + sensor.type)
+        logging.debug(u'measurement saved : ' + sensor.sensor_node.name + ':' + unicode(sensor.type))
 
         return render_to_response('sensor_page/saved.html')
 
