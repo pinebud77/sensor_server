@@ -60,6 +60,8 @@ def sensor_settings(request):
             'sensor': sensor,
             }
 
+        logging.debug(u'sensor dispatched sensor setting : ' + unicode(sensor))
+
         return render_to_response('sensor_page/ssettings_values.txt', context_dict, context)
     else:
         form = SensorSettingForm()
@@ -93,6 +95,8 @@ def settings(request):
             'sensor_node': sensor_node,
             }
 
+        logging.debug(u'sensor node dispatched setting : ' + unicode(sensor_node))
+
         return render_to_response('sensor_page/settings_values.txt', context_dict, context)
     else:
         form = SettingForm()
@@ -112,6 +116,7 @@ def login_page(request):
         if not user.is_active:
             return render_to_response('sensor_page/inact_user.html')
         login(request, user)
+        logging.info(u'user logged in : ' + unicode(user))
         return redirect('/sensor/userinfo/')
 
     else:
@@ -152,7 +157,7 @@ def check_range(measure):
             user_contacts = UserContact.objects.filter(user_info=user_info)
             for contact in user_contacts:
                 send_sms(contact.phone_number, text)
-                logging.info("sent sms to sensor.sensor_node.user")
+                logging.info(u'sent SMS on the range error : ' + unicode(sensor))
         except UserInfo.DoesNotExist:
             pass
 
@@ -182,9 +187,12 @@ def input(request):
         measure.save()
 
         sensor_node.last_update = measure.date
+        sensor_node.warning_count = 0
         sensor_node.save()
 
         check_range(measure)
+
+        logging.debug(u'measurement saved : ' + unicode(measure))
 
         return render_to_response('sensor_page/saved.html')
 
@@ -335,3 +343,42 @@ def userinfo(request, format="day"):
     }
 
     return render_to_response('sensor_page/userinfo.html', context_dict, context)
+
+
+def cron_job(request):
+    logging.info('cronjob started')
+
+    now = datetime.datetime.now()
+
+    for sensor_node in SensorNode.objects.all():
+        if sensor_node.last_update.replace(tzinfo=None) < now - datetime.timedelta(seconds=sensor_node.warning_period):
+            logging.debug(u'sensor node did not report : ' + unicode(sensor_node))
+            report = False
+            if sensor_node.warning_count > 3:
+                continue
+            elif sensor_node.warning_count == 0:
+                report = True
+            elif sensor_node.last_warning_date.replace(tzinfo=None) < now - datetime.timedelta(seconds=sensor_node.warning_period):
+                report = True
+
+            if report:
+                message = u'센서가 %d초동안 정보를 보내지 않았습니다. (%d/%d) (' % (sensor_node.warning_period, sensor_node.warning_count+1, 3)
+                message += unicode(sensor_node)
+                message += u')'
+                try:
+                    user_info = UserInfo.objects.get(user=sensor_node.user)
+                    for contact in UserContact.objects.filter(user_info=user_info):
+                        send_sms(contact.phone_number, message)
+
+                    sensor_node.warning_count += 1
+                    now_utc = now.replace(tzinfo=pytz.utc)
+                    sensor_node.last_warning_date = now_utc.astimezone(pytz.timezone(user_info.timezone))
+                    sensor_node.save()
+
+                    logging.info(u'Sent SMS for dead sensor : ' + unicode(sensor_node))
+                except UserInfo.DoesNotExist:
+                    logging.error(u'no user information for dead sensor : ' + sensor_node)
+
+    logging.info('cronjob finished')
+    return render_to_response('sensor_page/cronjobdone.html')
+
