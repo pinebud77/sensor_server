@@ -219,13 +219,15 @@ def dynamic_png(sensor_id, format):
     highs = []
     lows = []
 
+    ymax = -1000.0
+    ymin = 1000.0
+
     if measure_entries[0].sensor.high_threshold != 1000.0:
         highs = [measure_entries[0].sensor.high_threshold, measure_entries[0].sensor.high_threshold]
+        ymax = highs[0] + 10
     if measure_entries[0].sensor.low_threshold != -1000.0:
         lows = [measure_entries[0].sensor.low_threshold, measure_entries[0].sensor.low_threshold]
-
-    ymax = highs[0] + 10
-    ymin = lows[0] - 10
+        ymin = lows[0] - 10
 
     user_info = UserInfo.objects.get(user=sensor.sensor_node.user)
     tz = pytz.timezone(user_info.timezone)
@@ -237,11 +239,8 @@ def dynamic_png(sensor_id, format):
         values.append(measure.value)
         if measure.value > ymax:
             ymax = measure.value + 10
-        elif measure.value < ymin:
+        if measure.value < ymin:
             ymin = measure.value - 10
-
-    highs = [measure_entries[0].sensor.high_threshold, measure_entries[0].sensor.high_threshold]
-    lows = [measure_entries[0].sensor.low_threshold, measure_entries[0].sensor.low_threshold]
 
     date_max = datetime.datetime.utcnow()
     date_max += tz.utcoffset(date_max)
