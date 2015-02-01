@@ -199,7 +199,7 @@ def check_range(measure):
                 send_sms(contact.phone_number, text)
                 logging.info(u'sent SMS on the range error : ' + sensor.sensor_node.name)
         except UserInfo.DoesNotExist:
-            logging.error(u'User info was not specified : ' + sensor_node.user.userid)
+            logging.error(u'User info was not specified : ' + sensor_node.user.username)
 
     return report
 
@@ -405,7 +405,7 @@ def cron_job(request):
 
             if report:
                 message = u'센서가 %d초동안 정보를 보내지 않았습니다. (%d/%d) (' % (sensor_node.warning_period, sensor_node.warning_count+1, 3)
-                message += sensor_node.user.userid + u':' + sensor_node.name
+                message += sensor_node.user.username + u':' + sensor_node.name
                 message += u')'
                 try:
                     user_info = UserInfo.objects.get(user=sensor_node.user)
