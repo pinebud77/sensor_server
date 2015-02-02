@@ -9,4 +9,5 @@ urlpatterns = patterns('',
                        url(r'^input/', views.input),
                        url(r'^settings/', views.settings),
                        url(r'^ssettings/', views.sensor_settings),
+                       url(r'', views.userinfo),
                        )

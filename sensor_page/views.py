@@ -251,53 +251,16 @@ class UtcTzinfo(datetime.tzinfo):
 
 
 def dynamic_png(sensor_id, format):
-    #ToDo : read only required entries from the DB
+    sensor = None
+    measure_entries = None
+    date_max = datetime.datetime.utcnow()
+    tz = None
+    delta = None
+
     try:
         sensor = Sensor.objects.get(pk=sensor_id)
-        try:
-            measure_entries = MeasureEntry.objects.filter(sensor=sensor)
-        except MeasureEntry.DoesNotExist:
-            pass
-    except Sensor.DoesNotExist:
-        pass
-
-    if not measure_entries:
-        return None
-
-    dates = []
-    values = []
-    highs = []
-    lows = []
-
-    ymax = -1000.0
-    ymin = 1000.0
-
-    if measure_entries[0].sensor.high_threshold != 1000.0:
-        highs = [measure_entries[0].sensor.high_threshold, measure_entries[0].sensor.high_threshold]
-        ymax = highs[0] + 10
-    if measure_entries[0].sensor.low_threshold != -1000.0:
-        lows = [measure_entries[0].sensor.low_threshold, measure_entries[0].sensor.low_threshold]
-        ymin = lows[0] - 10
-
-    user_info = UserInfo.objects.get(user=sensor.sensor_node.user)
-    tz = pytz.timezone(user_info.timezone)
-
-    for measure in measure_entries:
-        measure.date = measure.date.replace(tzinfo=None)
-        measure.date += tz.utcoffset(measure.date)
-        dates.append(measure.date)
-        values.append(measure.value)
-        if measure.value > ymax:
-            ymax = measure.value + 10
-        if measure.value < ymin:
-            ymin = measure.value - 10
-
-    date_max = datetime.datetime.utcnow()
-    date_max += tz.utcoffset(date_max)
-
-    try:
-        fig, ax = plt.subplots()
-        ax.plot_date(dates, values,linestyle='solid', color='blue')
+        user_info = UserInfo.objects.get(user=sensor.sensor_node.user)
+        tz = pytz.timezone(user_info.timezone)
 
         if format == "hour":
             delta = datetime.timedelta(hours=1)
@@ -309,7 +272,51 @@ def dynamic_png(sensor_id, format):
             delta = datetime.timedelta(weeks=4)
         else:
             delta = datetime.timedelta(days=365)
-        date_min = date_max - delta
+
+        try:
+            measure_entries = MeasureEntry.objects.filter(sensor=sensor, date__gt=(date_max - delta - datetime.timedelta(days=2)))
+        except MeasureEntry.DoesNotExist:
+            pass
+    except Sensor.DoesNotExist:
+        pass
+
+    if not measure_entries:
+        return None
+
+    date_min = date_max - delta
+
+    dates = []
+    values = []
+    highs = []
+    lows = []
+
+    ymax = -1000.0
+    ymin = 1000.0
+
+    if sensor.high_threshold != 1000.0:
+        highs = [sensor.high_threshold, sensor.high_threshold]
+        ymax = highs[0] + 10
+    if sensor.low_threshold != -1000.0:
+        lows = [sensor.low_threshold, sensor.low_threshold]
+        ymin = lows[0] - 10
+
+    for measure in measure_entries:
+        measure.date = measure.date.replace(tzinfo=None)
+        measure.date += tz.utcoffset(measure.date)
+        dates.append(measure.date)
+        values.append(measure.value)
+
+        if measure.date >= date_min:
+            if measure.value > ymax:
+                ymax = measure.value + 10
+            if measure.value < ymin:
+                ymin = measure.value - 10
+
+    try:
+        fig, ax = plt.subplots()
+        ax.plot_date(dates, values,linestyle='solid', color='blue')
+
+
 
         if highs:
             ax.plot_date([date_min, date_max], highs, linestyle='solid', color='red', linewidth=3, marker="")
