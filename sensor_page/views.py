@@ -339,6 +339,9 @@ def dynamic_png(sensor_id, format):
 
 
 def userinfo(request, format="day"):
+    #ToDO : add non graph output to userinfo page
+    #ToDO : add logout button to userinfo page
+
     if not request.user.is_authenticated():
         return redirect('/sensor/login/')
 

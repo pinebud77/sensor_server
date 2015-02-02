@@ -2,10 +2,22 @@ import urllib
 import urllib2
 import logging
 
-#ToDo : handle unformate phone number
+
+def normalize_phone_number(string):
+    normalized_str = ""
+    for character in string:
+        if character < '0':
+            continue
+        elif character > '9':
+            continue
+        normalized_str += character
+
+    return normalized_str
+
 
 def send_sms(receiver, message):
     url = 'http://www.munjanara.co.kr/MSG/send/web_admin_send.htm'
+    receiver = normalize_phone_number(receiver)
     values = {
         'userid': 'chiknhed',
         'passwd': 'shfur2@@',
