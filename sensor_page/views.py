@@ -159,7 +159,7 @@ def check_first_and_resume(measure):
             text += u'온도 : '
         else:
             text += u'습도 : '
-        text += str(measure.value)
+        text += '%.1f' % measure.value
 
         try:
             user_info = UserInfo.objects.get(user=sensor_node.user)
@@ -190,7 +190,7 @@ def check_range(measure):
             text += u'온도 : '
         else:
             text += u'습도 : '
-        text += str(measure.value)
+        text += '%.1f' % measure.value
 
         try:
             user_info = UserInfo.objects.get(user=sensor.sensor_node.user)
@@ -204,6 +204,7 @@ def check_range(measure):
     return report
 
 def input(request):
+    #ToDo : get the RSSI report from the sensor node
     context = RequestContext(request)
 
     if request.method == 'POST':
@@ -316,8 +317,6 @@ def dynamic_png(sensor_id, format):
         fig, ax = plt.subplots()
         ax.plot_date(dates, values,linestyle='solid', color='blue')
 
-
-
         if highs:
             ax.plot_date([date_min, date_max], highs, linestyle='solid', color='red', linewidth=3, marker="")
         if lows:
@@ -397,7 +396,10 @@ def userinfo(request, format="day"):
     return render_to_response('sensor_page/userinfo.html', context_dict, context)
 
 
+#ToDO: add cronjob to check Munjanara account
+
 def cron_job(request):
+    #ToDO: move cronjobs to a seperate file
     logging.info('cronjob started')
 
     now = datetime.datetime.now()

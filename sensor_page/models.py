@@ -40,6 +40,7 @@ class SensorNode(models.Model):
     last_update = models.DateTimeField(auto_now_add=True)
     last_warning_date = models.DateTimeField(auto_now_add=True, null=True)
     warning_count = models.IntegerField(default=0, null=True)
+    #ToDO: add last reported RSSI field
 
     def __unicode__(self):
         return self.user.username + u' ' + self.name + u' MAC(' + self.mac_address + u') warning(' + unicode(self.warning_count) + u')'
