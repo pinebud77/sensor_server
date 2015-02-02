@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 
 from django.template import RequestContext
 from django.shortcuts import render_to_response, redirect
@@ -122,6 +122,11 @@ def login_page(request):
     else:
         form = LoginForm()
         return render_to_response('sensor_page/login.html', {'form': form}, context)
+
+
+def logout_page(request):
+    logout(request)
+    return redirect('/sensor/login/')
 
 
 def get_client_ip(request):
@@ -339,8 +344,6 @@ def dynamic_png(sensor_id, format):
 
 def userinfo(request, format="day"):
     #ToDO : add non graph output to userinfo page
-    #ToDO : add logout button to userinfo page
-
     if not request.user.is_authenticated():
         return redirect('/sensor/login/')
 

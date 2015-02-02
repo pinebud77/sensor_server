@@ -5,7 +5,8 @@
     <title>사용자 : {{ username }}</title>
 </head>
 <body>
-<h1>사용자 : {{ username }}</h1>
+<h1>사용자 : {{ username }}</h1><br/>
+<a href="/sensor/logout/">로그아웃</a><br/>
 <strong>전화번호 정보</strong>
 {% if phone_numbers %}
     {% for number in phone_numbers %}
