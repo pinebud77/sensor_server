@@ -32,9 +32,6 @@ subprocess.STDOUT = None
 import matplotlib.pyplot as plt
 
 
-#ToDO: exception handlings
-
-
 def sensor_settings(request):
     #ToDO: check expiration of the sensor user
     context = RequestContext(request)
@@ -317,7 +314,7 @@ def dynamic_png(sensor_id, display_fmt):
 
     try:
         fig, ax = plt.subplots()
-        ax.plot_date(dates, values,linestyle='solid', color='blue')
+        ax.plot_date(dates, values, linestyle='solid', color='blue')
 
         if highs:
             ax.plot_date([date_min, date_max], highs, linestyle='solid', color='red', linewidth=3, marker="")
