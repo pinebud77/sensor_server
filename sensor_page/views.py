@@ -7,6 +7,7 @@ from django.shortcuts import render_to_response, redirect
 
 from sensor_page.models import *
 from sensor_page.forms import *
+from sensor_page.utils import get_hash_from_mac
 
 import pytz
 import datetime
@@ -16,6 +17,7 @@ import StringIO
 from munjanara_sms import send_sms
 
 import logging
+
 
 
 os.environ["MATPLOTLIBDATA"] = os.getcwdu()
@@ -30,20 +32,14 @@ import matplotlib.pyplot as plt
 
 
 def sensor_settings(request):
+    #ToDO: check expiration of the sensor user
     context = RequestContext(request)
 
     if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
+        hash_key = request.POST['hash_key']
 
-        if username != 'company':
+        if hash_key != get_hash_from_mac(request.POST['mac_address']):
             return render_to_response('sensor_page/nouser.html')
-
-        user = authenticate(username=username, password=password)
-        if not user:
-            return render_to_response('sensor_page/nouser.html')
-        if not user.is_active:
-            return render_to_response('sensor_page/nact_user.html')
 
         sensor = None
 
@@ -72,17 +68,10 @@ def settings(request):
     context = RequestContext(request)
 
     if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
+        hash_key = request.POST['hash_key']
 
-        if username != 'company':
+        if hash_key != get_hash_from_mac(request.POST['mac_address']):
             return render_to_response('sensor_page/nouser.html')
-
-        user = authenticate(username=username, password=password)
-        if not user:
-            return render_to_response('sensor_page/nouser.html')
-        if not user.is_active:
-            return render_to_response('sensor_page/nact_user.html')
 
         sensor_node = None
 
@@ -208,22 +197,16 @@ def check_range(measure):
 
     return report
 
-def input(request):
-    #ToDo : get the RSSI report from the sensor node
+
+def input_page(request):
+    #ToDO: get the RSSI report from the sensor node
     context = RequestContext(request)
 
     if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
+        hash_key = request.POST['hash_key']
 
-        if username != 'company':
+        if hash_key != get_hash_from_mac(request.POST['mac_address']):
             return render_to_response('sensor_page/nouser.html')
-
-        user = authenticate(username=username, password=password)
-        if not user:
-            return render_to_response('sensor_page/nouser.html')
-        if not user.is_active:
-            return render_to_response('sensor_page/inact_user.html')
 
         sensor_node = SensorNode.objects.get(mac_address=request.POST['mac_address'])
         sensor = Sensor.objects.get(sensor_node=sensor_node, type=int(request.POST['type']))
@@ -260,6 +243,8 @@ def dynamic_png(sensor_id, format):
     sensor = None
     measure_entries = None
     date_max = datetime.datetime.utcnow()
+    date_max = date_max.replace(tzinfo=pytz.utc)
+
     tz = None
     delta = None
 
@@ -280,7 +265,8 @@ def dynamic_png(sensor_id, format):
             delta = datetime.timedelta(days=365)
 
         try:
-            measure_entries = MeasureEntry.objects.filter(sensor=sensor, date__gt=(date_max - delta - datetime.timedelta(days=2)))
+            measure_entries = MeasureEntry.objects.filter(sensor=sensor,
+                                                          date__gt=(date_max - delta - datetime.timedelta(days=2)))
         except MeasureEntry.DoesNotExist:
             pass
     except Sensor.DoesNotExist:
@@ -306,6 +292,9 @@ def dynamic_png(sensor_id, format):
         lows = [sensor.low_threshold, sensor.low_threshold]
         ymin = lows[0] - 10
 
+    date_max = date_max.replace(tzinfo=None)
+    date_min = date_min.replace(tzinfo=None)
+
     for measure in measure_entries:
         measure.date = measure.date.replace(tzinfo=None)
         measure.date += tz.utcoffset(measure.date)
@@ -317,6 +306,10 @@ def dynamic_png(sensor_id, format):
                 ymax = measure.value + 10
             if measure.value < ymin:
                 ymin = measure.value - 10
+
+
+    date_max += tz.utcoffset(date_max)
+    date_min += tz.utcoffset(date_min)
 
     try:
         fig, ax = plt.subplots()
