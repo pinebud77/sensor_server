@@ -326,7 +326,6 @@ def dynamic_png(sensor_id, display_fmt):
 
         ax.set_xlim(date_min, date_max)
         ax.set_ylim(ymin, ymax)
-
         ax.grid(True)
 
         fig.set_size_inches(6, 4)
@@ -396,13 +395,10 @@ def userinfo(request, display_fmt="day"):
 #ToDO: add cronjob to check Munjanara account
 
 def cron_job(request):
-    logging.info('cronjob started')
-
     now = datetime.datetime.now()
 
     for sensor_node in SensorNode.objects.all():
         if sensor_node.last_update.replace(tzinfo=None) < now - datetime.timedelta(seconds=sensor_node.warning_period):
-            logging.debug(u'sensor node did not report : ' + unicode(sensor_node))
             report = False
             if sensor_node.warning_count + 1 > 3:
                 report = False
@@ -412,6 +408,7 @@ def cron_job(request):
                 report = True
 
             if report:
+                logging.debug(u'sensor node did not report : ' + unicode(sensor_node))
                 message = u'센서가 %d분동안 정보를 보내지 않았습니다. (%d/%d) (' % (sensor_node.warning_period / 60, sensor_node.warning_count+1, 3)
                 message += sensor_node.user.username + u':' + sensor_node.name
                 message += u')'
@@ -429,6 +426,5 @@ def cron_job(request):
                 except UserInfo.DoesNotExist:
                     logging.error(u'no user information for dead sensor : ' + sensor_node.user.username)
 
-    logging.info('cronjob finished')
     return render_to_response('sensor_page/cronjobdone.html')
 
