@@ -15,6 +15,7 @@ def normalize_phone_number(string):
 
 
 def send_sms(receiver, message):
+    #ToDO: send message should be parallel T_T
     url = 'http://www.munjanara.co.kr/MSG/send/web_admin_send.htm'
     receiver = normalize_phone_number(receiver)
     values = {
@@ -26,5 +27,4 @@ def send_sms(receiver, message):
         }
     data = urllib.urlencode(values)
     req = urllib2.Request(url, data)
-    response = urllib2.urlopen(req)
-    logging.error(response.read)
+    urllib2.urlopen(req)

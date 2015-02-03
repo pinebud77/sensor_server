@@ -17,6 +17,7 @@ import StringIO
 from munjanara_sms import send_sms
 
 import logging
+import thread
 
 
 os.environ["MATPLOTLIBDATA"] = os.getcwdu()
@@ -222,6 +223,7 @@ def input_page(request):
         rssi = request.POST['rssi']
         #ToDO: record last rssi
         if int(rssi) < -80:
+            logging.warning(u'RSSI too low : ' + unicode(sensor.sensor_node))
             #ToDO: handle low rssi
             pass
 
@@ -394,6 +396,7 @@ def userinfo(request, display_fmt="day"):
 
 #ToDO: add cronjob to check Munjanara account
 
+
 def cron_job(request):
     now = datetime.datetime.now()
 
@@ -415,7 +418,7 @@ def cron_job(request):
                 try:
                     user_info = UserInfo.objects.get(user=sensor_node.user)
                     for contact in UserContact.objects.filter(user_info=user_info):
-                        send_sms(contact.phone_number, message)
+                        thread.start_new_thread(send_sms, (contact.phone_number, message))
 
                     sensor_node.warning_count += 1
                     now_utc = now.replace(tzinfo=pytz.utc)
