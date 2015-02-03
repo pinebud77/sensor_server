@@ -187,13 +187,12 @@ def check_range(measure):
                 send_sms(contact.phone_number, text)
                 logging.info(u'sent SMS on the range error : ' + sensor.sensor_node.name)
         except UserInfo.DoesNotExist:
-            logging.error(u'User info was not specified : ' + sensor_node.user.username)
+            logging.error(u'User info was not specified : ' + sensor.sensor_node.user.username)
 
     return report
 
 
 def input_page(request):
-    #ToDO: get the RSSI report from the sensor node
     context = RequestContext(request)
 
     if request.method == 'POST':
@@ -217,6 +216,12 @@ def input_page(request):
         check_first_and_resume(measure)
         check_range(measure)
 
+        rssi = request.POST['rssi']
+        #ToDO: record last rssi
+        if int(rssi) < -80:
+            #ToDO: handle low rssi
+            pass
+
         logging.debug(u'measurement saved : ' + sensor.sensor_node.name + ':' + unicode(sensor.type))
 
         return render_to_response('sensor_page/saved.html')
@@ -234,6 +239,7 @@ class UtcTzinfo(datetime.tzinfo):
 
 
 def dynamic_png(sensor_id, format):
+    #TODO: use localization for date format
     sensor = None
     measure_entries = None
     date_max = datetime.datetime.utcnow()
@@ -331,6 +337,7 @@ def dynamic_png(sensor_id, format):
 
 def userinfo(request, format="day"):
     #ToDO : add non graph output to userinfo page
+    #TODO : remove current time format from time format list
     if not request.user.is_authenticated():
         return redirect('/sensor/login/')
 
