@@ -24,7 +24,9 @@ os.environ["MPLCONFIGDIR"] = os.getcwdu()
 import subprocess
 
 
-def no_popen(*args, **kwargs): raise OSError("forbjudet")
+def no_popen(*args, **kwargs):
+    raise OSError("forbjudet")
+
 subprocess.Popen = no_popen
 subprocess.PIPE = None
 subprocess.STDOUT = None
@@ -37,9 +39,9 @@ def sensor_settings(request):
     context = RequestContext(request)
 
     if request.method == 'POST':
-        hash_key = request.POST['hash_key']
+        secure_key = request.POST['secure_key']
 
-        if hash_key != get_hash_from_mac(request.POST['mac_address']):
+        if secure_key != get_hash_from_mac(request.POST['mac_address']):
             return render_to_response('sensor_page/nouser.html')
 
         sensor = None
@@ -69,9 +71,9 @@ def settings(request):
     context = RequestContext(request)
 
     if request.method == 'POST':
-        hash_key = request.POST['hash_key']
+        secure_key = request.POST['secure_key']
 
-        if hash_key != get_hash_from_mac(request.POST['mac_address']):
+        if secure_key != get_hash_from_mac(request.POST['mac_address']):
             return render_to_response('sensor_page/nouser.html')
 
         sensor_node = None
@@ -197,9 +199,9 @@ def input_page(request):
     context = RequestContext(request)
 
     if request.method == 'POST':
-        hash_key = request.POST['hash_key']
+        secure_key = request.POST['secure_key']
 
-        if hash_key != get_hash_from_mac(request.POST['mac_address']):
+        if secure_key != get_hash_from_mac(request.POST['mac_address']):
             return render_to_response('sensor_page/nouser.html')
 
         sensor_node = SensorNode.objects.get(mac_address=request.POST['mac_address'])
@@ -223,7 +225,8 @@ def input_page(request):
             #ToDO: handle low rssi
             pass
 
-        logging.debug(u'measurement saved : ' + sensor.sensor_node.name + ':' + unicode(sensor.type))
+        logging.debug(u'measurement saved : ' + sensor.sensor_node.name + ':' + unicode(sensor.type)
+                      + u':' + unicode(rssi))
 
         return render_to_response('sensor_page/saved.html')
 

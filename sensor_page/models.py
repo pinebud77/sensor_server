@@ -43,7 +43,8 @@ class SensorNode(models.Model):
     #ToDO: add last reported RSSI field
 
     def __unicode__(self):
-        return self.user.username + u' ' + self.name + u' MAC(' + self.mac_address + u') warning(' + unicode(self.warning_count) + u')'
+        return self.user.username + u' ' + self.name + u' MAC('\
+               + self.mac_address + u') warning(' + unicode(self.warning_count) + u')'
 
 
 class Sensor(models.Model):

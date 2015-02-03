@@ -11,7 +11,6 @@ def normalize_phone_number(string):
         elif character > '9':
             continue
         normalized_str += character
-
     return normalized_str
 
 
