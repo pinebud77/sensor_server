@@ -7,7 +7,7 @@ from django.shortcuts import render_to_response, redirect
 
 from sensor_page.models import *
 from sensor_page.forms import *
-from sensor_page.utils import get_hash_from_mac
+from sensor_page.utils import *
 
 import pytz
 import datetime
@@ -149,10 +149,7 @@ def check_first_and_resume(measure):
             text = u'센서가 다시 데이터를 보냈습니다. : '
             logging.info(u'sent SMS for the resume report : ' + sensor_node.user.username + ':' + sensor_node.name)
         text += sensor_node.name + u' : '
-        if measure.sensor.type == 0:
-            text += u'온도 : '
-        else:
-            text += u'습도 : '
+        text += get_sensor_type_str(measure.sensor.type) + u' : '
         text += '%.1f' % measure.value
 
         try:
@@ -180,10 +177,7 @@ def check_range(measure):
         text = u'범위를 넘었습니다. '
         text += sensor.sensor_node.name
         text += u' : '
-        if sensor.type == 0:
-            text += u'온도 : '
-        else:
-            text += u'습도 : '
+        text += get_sensor_type_str(measure.sensor.type) + u' : '
         text += '%.1f' % measure.value
 
         try:
@@ -395,7 +389,6 @@ def userinfo(request, format="day"):
 #ToDO: add cronjob to check Munjanara account
 
 def cron_job(request):
-    #ToDO: move cronjobs to a seperate file
     logging.info('cronjob started')
 
     now = datetime.datetime.now()

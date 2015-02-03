@@ -52,6 +52,7 @@ class Sensor(models.Model):
     SENSOR_TYPE_CHOICES = (
         (0, '온도'),
         (1, '습도'),
+        (2, '압력'),
     )
     type = models.IntegerField(choices=SENSOR_TYPE_CHOICES)
     high_threshold = models.FloatField(default=1000.0, null=True)
