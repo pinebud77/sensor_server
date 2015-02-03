@@ -19,16 +19,20 @@ from munjanara_sms import send_sms
 import logging
 
 
-
 os.environ["MATPLOTLIBDATA"] = os.getcwdu()
 os.environ["MPLCONFIGDIR"] = os.getcwdu()
 import subprocess
+
+
 def no_popen(*args, **kwargs): raise OSError("forbjudet")
 subprocess.Popen = no_popen
 subprocess.PIPE = None
 subprocess.STDOUT = None
 
 import matplotlib.pyplot as plt
+
+
+#ToDO: exception handlings
 
 
 def sensor_settings(request):
@@ -238,7 +242,7 @@ class UtcTzinfo(datetime.tzinfo):
     def olsen_name(self): return 'UTC'
 
 
-def dynamic_png(sensor_id, format):
+def dynamic_png(sensor_id, display_fmt):
     #TODO: use localization for date format
     sensor = None
     measure_entries = None
@@ -253,13 +257,13 @@ def dynamic_png(sensor_id, format):
         user_info = UserInfo.objects.get(user=sensor.sensor_node.user)
         tz = pytz.timezone(user_info.timezone)
 
-        if format == "hour":
+        if display_fmt == "hour":
             delta = datetime.timedelta(hours=1)
-        elif format == "day":
+        elif display_fmt == "day":
             delta = datetime.timedelta(days=1)
-        elif format == "week":
+        elif display_fmt == "week":
             delta = datetime.timedelta(weeks=1)
-        elif format == "month":
+        elif display_fmt == "month":
             delta = datetime.timedelta(weeks=4)
         else:
             delta = datetime.timedelta(days=365)
@@ -325,19 +329,20 @@ def dynamic_png(sensor_id, format):
 
         ax.grid(True)
 
+        fig.set_size_inches(6, 4)
         fig.autofmt_xdate()
+        fig.tight_layout()
 
         rv = StringIO.StringIO()
         plt.savefig(rv, format="png")
-        plt.clf()
+        plt.close()
+
         return """<img src="data:image/png;base64,%s"/>""" % rv.getvalue().encode("base64").strip()
     finally:
-        plt.clf()
+        plt.close()
 
 
-def userinfo(request, format="day"):
-    #ToDO : add non graph output to userinfo page
-    #TODO : remove current time format from time format list
+def userinfo(request, display_fmt="day"):
     if not request.user.is_authenticated():
         return redirect('/sensor/login/')
 
@@ -346,7 +351,6 @@ def userinfo(request, format="day"):
     phone_numbers = []
     sensor_nodes = []
     sensors = []
-    measure_entries = []
 
     try:
         user_info = UserInfo.objects.get(user=request.user)
@@ -361,7 +365,6 @@ def userinfo(request, format="day"):
     except UserInfo.DoesNotExist:
         pass
 
-
     try:
         sensor_nodes = SensorNode.objects.filter(user=request.user)
     except SensorNode.DoesNotExist:
@@ -375,19 +378,16 @@ def userinfo(request, format="day"):
 
     for sensor in sensors:
         try:
-            sensor.pic = dynamic_png(sensor.id, format)
+            sensor.pic = dynamic_png(sensor.id, display_fmt)
         except MeasureEntry.DoesNotExist:
             pass
-
-    for measure in measure_entries:
-        measure.date = measure.date.replace(tzinfo=UtcTzinfo())
-        measure.date.astimezone(pytz.timezone(user_info.timezone))
 
     context_dict = {
         'username': request.user.username,
         'phone_numbers': phone_numbers,
         'sensor_nodes': sensor_nodes,
         'sensors': sensors,
+        'display_fmt': display_fmt,
     }
 
     return render_to_response('sensor_page/userinfo.html', context_dict, context)

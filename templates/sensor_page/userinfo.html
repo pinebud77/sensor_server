@@ -1,12 +1,11 @@
 <!DOCTYPE html>
-
 <html>
 <head>
     <title>사용자 : {{ username }}</title>
 </head>
 <body>
-<h1>사용자 : {{ username }}</h1><br/>
-<a href="/sensor/logout/">로그아웃</a><br/>
+<h1>사용자 : {{ username }}</h1>
+<a href="/sensor/logout/">로그아웃</a><br/><br/>
 <strong>전화번호 정보</strong>
 {% if phone_numbers %}
     {% for number in phone_numbers %}
@@ -18,15 +17,29 @@
 <br/>
 {% if sensor_nodes %}
     그래프 :
+    {% if display_fmt != 'hour' %}
     <a href="/sensor/userinfo/hour/">1시간</a>
+    {% endif %}
+    {% if display_fmt != 'day' %}
     <a href="/sensor/userinfo/day/">하루</a>
+    {% endif %}
+    {% if display_fmt != 'week' %}
     <a href="/sensor/userinfo/week/">일주일</a>
+    {% endif %}
+    {% if display_fmt != 'month' %}
     <a href="/sensor/userinfo/month/">한달</a>
+    {% endif %}
+    {% if display_fmt != 'year' %}
     <a href="/sensor/userinfo/year/">1년</a>
+    {% endif %}
     <br/>
-    <br/>
+
     {% for sensor_node in sensor_nodes %}
-        <strong>{{ sensor_node.name }} : MAC({{ sensor_node.mac_address }}) : 보고주기({{ sensor_node.reporting_period }}초) : 정지시 알람({{ sensor_node.warning_period }}초)</strong><br/>
+        <br/>
+        <strong>{{ sensor_node.name }}</strong><br/>
+        MAC : {{ sensor_node.mac_address }}<br/>
+        보고주기 : {{ sensor_node.reporting_period }}초<br/>
+        정지시 알람 : {{ sensor_node.warning_period }}초<br/>
         <br/>
         {% for sensor in sensors %}
             {% if sensor.sensor_node == sensor_node %}
@@ -56,7 +69,8 @@
                 {% if sensor.pic %}
                     {{ sensor.pic|safe }}
                 {% else %}
-                    센서가 아직 데이터를 보내지 않았습니다.
+                    범위안에 센서 데이터가 없습니다.
+                    <br/>
                 {% endif %}
                 <br/>
             {% endif %}
