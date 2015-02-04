@@ -5,8 +5,6 @@ from django.contrib.auth import authenticate, login, logout
 from django.template import RequestContext
 from django.shortcuts import render_to_response, redirect
 
-from django.db.models import F
-
 from sensor_page.models import *
 from sensor_page.forms import *
 from sensor_page.utils import *
@@ -44,7 +42,7 @@ def send_sms_for_node(sensor_node, text):
         for contact in user_contacts:
             if contact.send_sms:
                 send_sms(contact.phone_number, text)
-                logging.info(u'sent SMS : ' + text)
+                logging.info(u'sent SMS : ' + contact.phone_number + u' : ' + text)
     except UserInfo.DoesNotExist:
         logging.error(u'User info was not specified : ' + sensor_node.user.username)
 

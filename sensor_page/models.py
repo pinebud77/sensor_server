@@ -6,6 +6,8 @@ import datetime
 import pytz
 
 
+#ToDO: consider DB optimization
+
 class UserInfo(models.Model):
     user = models.ForeignKey(User)
     expire_date = models.DateField(default=datetime.date(3000, 12, 31), null=True)
@@ -81,7 +83,7 @@ class Sensor(models.Model):
 class MeasureEntry(models.Model):
     sensor = models.ForeignKey(Sensor)
     value = models.FloatField()
-    date = models.DateTimeField('measured date', auto_now_add=True)
+    date = models.DateTimeField('measured date', auto_now_add=True, db_index=True)
     ip = models.IPAddressField(null=True)
 
     def __unicode__(self):
