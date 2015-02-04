@@ -3,7 +3,6 @@
 <head>센서 인풋 (디버깅용)</head>
 <body>
 <form id="input_form" method="post" action="/sensor/input/">
-    {% csrf_token %}
     {% for hidden in form.hidden_fields %}
         {{ hidden }}
     {% endfor %}

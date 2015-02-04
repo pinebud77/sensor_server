@@ -4,6 +4,7 @@ from django.contrib.auth import authenticate, login, logout
 
 from django.template import RequestContext
 from django.shortcuts import render_to_response, redirect
+from django.views.decorators.csrf import csrf_exempt
 
 from sensor_page.models import *
 from sensor_page.forms import *
@@ -194,9 +195,8 @@ def check_range(measure):
     return report
 
 
+@csrf_exempt
 def input_page(request):
-    context = RequestContext(request)
-
     if request.method == 'POST':
         secure_key = request.POST['secure_key']
 
@@ -232,7 +232,7 @@ def input_page(request):
 
     else:
         form = InputForm()
-        return render_to_response('sensor_page/input.html', {'form': form}, context)
+        return render_to_response('sensor_page/input.html', {'form': form})
 
 
 class UtcTzinfo(datetime.tzinfo):
@@ -402,30 +402,25 @@ def cron_job(request):
     sms_tuples = []
 
     for sensor_node in SensorNode.objects.filter(warning_count__lte=3, warning_start__lt=now):
-        report = False
-        if sensor_node.warning_count == 0:
-            report = True
-        elif sensor_node.last_warning_date.replace(tzinfo=pytz.utc) < now - datetime.timedelta(seconds=sensor_node.warning_period):
-            report = True
+        message = u'센서가 %d분동안 정보를 보내지 않았습니다. (%d/%d) (' % (sensor_node.warning_period / 60, sensor_node.warning_count+1, 3)
+        message += sensor_node.user.username + u':' + sensor_node.name
+        message += u')'
+        try:
+            user_info = UserInfo.objects.get(user=sensor_node.user)
+            for contact in UserContact.objects.filter(user_info=user_info):
+                if contact.send_sms:
+                    sms_tuples.append((contact.phone_number, message))
+                    logging.info(u'Sending SMS for dead sensor : ' + unicode(contact.phone_number)
+                                 + u' : ' + unicode(sensor_node))
 
-        if report:
-            message = u'센서가 %d분동안 정보를 보내지 않았습니다. (%d/%d) (' % (sensor_node.warning_period / 60, sensor_node.warning_count+1, 3)
-            message += sensor_node.user.username + u':' + sensor_node.name
-            message += u')'
-            try:
-                user_info = UserInfo.objects.get(user=sensor_node.user)
-                for contact in UserContact.objects.filter(user_info=user_info):
-                    if contact.send_sms:
-                        sms_tuples.append((contact.phone_number, message))
-                        logging.info(u'Sending SMS for dead sensor : ' + unicode(contact.phone_number)
-                                     + u' : ' + unicode(sensor_node))
-
-                sensor_node.warning_count += 1
-                now_utc = now.replace(tzinfo=pytz.utc)
-                sensor_node.last_warning_date = now_utc.astimezone(pytz.timezone(user_info.timezone))
-                sensor_node.save()
-            except UserInfo.DoesNotExist:
-                logging.error(u'no user information for dead sensor : ' + sensor_node.user.username)
+            sensor_node.warning_count += 1
+            now_utc = now.replace(tzinfo=pytz.utc)
+            sensor_node.warning_start = now_utc.astimezone(pytz.timezone(user_info.timezone))\
+                                        + datetime.timedelta(seconds=sensor_node.warning_period)
+            sensor_node.last_warning_date = now_utc.astimezone(pytz.timezone(user_info.timezone))
+            sensor_node.save()
+        except UserInfo.DoesNotExist:
+            logging.error(u'no user information for dead sensor : ' + sensor_node.user.username)
 
     if sms_tuples:
         thread.start_new_thread(send_bulk_sms, (sms_tuples,))
