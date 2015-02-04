@@ -30,5 +30,6 @@ def send_sms(receiver, message):
 
 
 def send_bulk_sms(tuples):
+    logging.warn(unicode(tuples))
     for (receiver, msg) in tuples:
         send_sms(receiver, msg)

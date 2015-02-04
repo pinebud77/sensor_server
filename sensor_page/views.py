@@ -397,18 +397,18 @@ def userinfo(request, display_fmt="day"):
 
 def cron_job(request):
     now = datetime.datetime.now()
+    now = now.replace(tzinfo=pytz.utc)
 
-    for sensor_node in SensorNode.objects.filter(warning_count__gte=3, warning_start__lt=now):
+    sms_tuples = []
+
+    for sensor_node in SensorNode.objects.filter(warning_count__lte=3, warning_start__lt=now):
         report = False
         if sensor_node.warning_count == 0:
             report = True
-        elif sensor_node.last_warning_date.replace(tzinfo=None) < now - datetime.timedelta(seconds=sensor_node.warning_period):
+        elif sensor_node.last_warning_date.replace(tzinfo=pytz.utc) < now - datetime.timedelta(seconds=sensor_node.warning_period):
             report = True
 
         if report:
-            sms_tuples = []
-
-            logging.debug(u'sensor node did not report : ' + unicode(sensor_node))
             message = u'센서가 %d분동안 정보를 보내지 않았습니다. (%d/%d) (' % (sensor_node.warning_period / 60, sensor_node.warning_count+1, 3)
             message += sensor_node.user.username + u':' + sensor_node.name
             message += u')'
@@ -417,18 +417,18 @@ def cron_job(request):
                 for contact in UserContact.objects.filter(user_info=user_info):
                     if contact.send_sms:
                         sms_tuples.append((contact.phone_number, message))
+                        logging.info(u'Sending SMS for dead sensor : ' + unicode(contact.phone_number)
+                                     + u' : ' + unicode(sensor_node))
 
                 sensor_node.warning_count += 1
                 now_utc = now.replace(tzinfo=pytz.utc)
                 sensor_node.last_warning_date = now_utc.astimezone(pytz.timezone(user_info.timezone))
                 sensor_node.save()
-
-                logging.info(u'Sending SMS for dead sensor : ' + unicode(sensor_node))
             except UserInfo.DoesNotExist:
                 logging.error(u'no user information for dead sensor : ' + sensor_node.user.username)
 
-            if sms_tuples:
-                thread.start_new_thread(send_bulk_sms, (sms_tuples))
+    if sms_tuples:
+        thread.start_new_thread(send_bulk_sms, (sms_tuples,))
 
     return render_to_response('sensor_page/cronjobdone.html')
 
