@@ -8,7 +8,7 @@ import pytz
 
 class UserInfo(models.Model):
     user = models.ForeignKey(User)
-    expire_date = models.DateField(default=datetime.date(datetime.MAXYEAR, 12, 31), null=True)
+    expire_date = models.DateField(default=datetime.date(3000, 12, 31), null=True)
 
     TZ_CHOICES = [(tz, tz) for tz in pytz.all_timezones]
     timezone = models.CharField(max_length=30, default='Asia/Seoul', choices=TZ_CHOICES)
@@ -26,6 +26,14 @@ class UserInfo(models.Model):
 class UserContact(models.Model):
     user_info = models.ForeignKey(UserInfo)
     phone_number = models.CharField(max_length=30)
+    send_sms = models.BooleanField(default=True)
+
+    PHONE_TYPE_CHOICES = (
+        (0, '피쳐폰'),
+        (1, '안드로이드'),
+        (2, '아이폰'),
+    )
+    phone_type = models.IntegerField(choices=PHONE_TYPE_CHOICES, default=0)
 
     def __unicode__(self):
         return self.user_info.user.username + u' (' + self.phone_number + u')'
@@ -38,9 +46,10 @@ class SensorNode(models.Model):
     reporting_period = models.IntegerField(default=600)
     warning_period = models.IntegerField(default=3600, null=True)
     last_update = models.DateTimeField(auto_now_add=True)
+    warning_start = models.DateTimeField(default=datetime.datetime(3000, 12, 31), null=True)
     last_warning_date = models.DateTimeField(auto_now_add=True, null=True)
     warning_count = models.IntegerField(default=0, null=True)
-    #ToDO: add last reported RSSI field
+    last_rssi = models.IntegerField(default=-60, null=True)
 
     def __unicode__(self):
         return self.user.username + u' ' + self.name + u' MAC('\

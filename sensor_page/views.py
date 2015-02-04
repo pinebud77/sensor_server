@@ -5,6 +5,8 @@ from django.contrib.auth import authenticate, login, logout
 from django.template import RequestContext
 from django.shortcuts import render_to_response, redirect
 
+from django.db.models import F
+
 from sensor_page.models import *
 from sensor_page.forms import *
 from sensor_page.utils import *
@@ -14,7 +16,7 @@ import datetime
 
 import os
 import StringIO
-from munjanara_sms import send_sms
+from munjanara_sms import send_sms, send_bulk_sms
 
 import logging
 import thread
@@ -33,6 +35,18 @@ subprocess.PIPE = None
 subprocess.STDOUT = None
 
 import matplotlib.pyplot as plt
+
+
+def send_sms_for_node(sensor_node, text):
+    try:
+        user_info = UserInfo.objects.get(user=sensor_node.user)
+        user_contacts = UserContact.objects.filter(user_info=user_info)
+        for contact in user_contacts:
+            if contact.send_sms:
+                send_sms(contact.phone_number, text)
+                logging.info(u'sent SMS : ' + text)
+    except UserInfo.DoesNotExist:
+        logging.error(u'User info was not specified : ' + sensor_node.user.username)
 
 
 def sensor_settings(request):
@@ -156,14 +170,7 @@ def check_first_and_resume(measure):
         text += get_sensor_type_str(measure.sensor.type) + u' : '
         text += '%.1f' % measure.value
 
-        try:
-            user_info = UserInfo.objects.get(user=sensor_node.user)
-            user_contacts = UserContact.objects.filter(user_info=user_info)
-            for contact in user_contacts:
-                send_sms(contact.phone_number, text)
-                logging.info(u'sent SMS')
-        except UserInfo.DoesNotExist:
-            logging.error(u'User info was not specified : ' + sensor_node.user.username)
+        send_sms_for_node(sensor_node, text)
 
     return first or resume
 
@@ -184,14 +191,7 @@ def check_range(measure):
         text += get_sensor_type_str(measure.sensor.type) + u' : '
         text += '%.1f' % measure.value
 
-        try:
-            user_info = UserInfo.objects.get(user=sensor.sensor_node.user)
-            user_contacts = UserContact.objects.filter(user_info=user_info)
-            for contact in user_contacts:
-                send_sms(contact.phone_number, text)
-                logging.info(u'sent SMS on the range error : ' + sensor.sensor_node.name)
-        except UserInfo.DoesNotExist:
-            logging.error(u'User info was not specified : ' + sensor.sensor_node.user.username)
+        send_sms_for_node(sensor.sensor_node, text)
 
     return report
 
@@ -215,20 +215,20 @@ def input_page(request):
         measure.save()
 
         sensor_node.last_update = measure.date
+        sensor_node.warning_start = measure.date + datetime.timedelta(seconds=sensor_node.warning_period)
+        sensor_node.last_rssi = int(request.POST['rssi'])
         sensor_node.save()
 
         check_first_and_resume(measure)
         check_range(measure)
 
-        rssi = request.POST['rssi']
-        #ToDO: record last rssi
-        if int(rssi) < -80:
+        if sensor_node.last_rssi < -80:
             logging.warning(u'RSSI too low : ' + unicode(sensor.sensor_node))
             #ToDO: handle low rssi
             pass
 
         logging.debug(u'measurement saved : ' + sensor.sensor_node.name + ':' + unicode(sensor.type)
-                      + u':' + unicode(rssi))
+                      + u':' + unicode(sensor_node.last_rssi))
 
         return render_to_response('sensor_page/saved.html')
 
@@ -400,34 +400,37 @@ def userinfo(request, display_fmt="day"):
 def cron_job(request):
     now = datetime.datetime.now()
 
-    for sensor_node in SensorNode.objects.all():
-        if sensor_node.last_update.replace(tzinfo=None) < now - datetime.timedelta(seconds=sensor_node.warning_period):
-            report = False
-            if sensor_node.warning_count + 1 > 3:
-                report = False
-            elif sensor_node.warning_count == 0:
-                report = True
-            elif sensor_node.last_warning_date.replace(tzinfo=None) < now - datetime.timedelta(seconds=sensor_node.warning_period):
-                report = True
+    for sensor_node in SensorNode.objects.filter(warning_count__gte=3, warning_start__lt=now):
+        report = False
+        if sensor_node.warning_count == 0:
+            report = True
+        elif sensor_node.last_warning_date.replace(tzinfo=None) < now - datetime.timedelta(seconds=sensor_node.warning_period):
+            report = True
 
-            if report:
-                logging.debug(u'sensor node did not report : ' + unicode(sensor_node))
-                message = u'센서가 %d분동안 정보를 보내지 않았습니다. (%d/%d) (' % (sensor_node.warning_period / 60, sensor_node.warning_count+1, 3)
-                message += sensor_node.user.username + u':' + sensor_node.name
-                message += u')'
-                try:
-                    user_info = UserInfo.objects.get(user=sensor_node.user)
-                    for contact in UserContact.objects.filter(user_info=user_info):
-                        thread.start_new_thread(send_sms, (contact.phone_number, message))
+        if report:
+            sms_tuples = []
 
-                    sensor_node.warning_count += 1
-                    now_utc = now.replace(tzinfo=pytz.utc)
-                    sensor_node.last_warning_date = now_utc.astimezone(pytz.timezone(user_info.timezone))
-                    sensor_node.save()
+            logging.debug(u'sensor node did not report : ' + unicode(sensor_node))
+            message = u'센서가 %d분동안 정보를 보내지 않았습니다. (%d/%d) (' % (sensor_node.warning_period / 60, sensor_node.warning_count+1, 3)
+            message += sensor_node.user.username + u':' + sensor_node.name
+            message += u')'
+            try:
+                user_info = UserInfo.objects.get(user=sensor_node.user)
+                for contact in UserContact.objects.filter(user_info=user_info):
+                    if contact.send_sms:
+                        sms_tuples.append((contact.phone_number, message))
 
-                    logging.info(u'Sent SMS for dead sensor : ' + unicode(sensor_node))
-                except UserInfo.DoesNotExist:
-                    logging.error(u'no user information for dead sensor : ' + sensor_node.user.username)
+                sensor_node.warning_count += 1
+                now_utc = now.replace(tzinfo=pytz.utc)
+                sensor_node.last_warning_date = now_utc.astimezone(pytz.timezone(user_info.timezone))
+                sensor_node.save()
+
+                logging.info(u'Sending SMS for dead sensor : ' + unicode(sensor_node))
+            except UserInfo.DoesNotExist:
+                logging.error(u'no user information for dead sensor : ' + sensor_node.user.username)
+
+            if sms_tuples:
+                thread.start_new_thread(send_bulk_sms, (sms_tuples))
 
     return render_to_response('sensor_page/cronjobdone.html')
 
