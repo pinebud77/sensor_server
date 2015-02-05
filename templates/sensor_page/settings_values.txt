@@ -1,6 +1,6 @@
 <!DOCTYPE plain-text>
 {% if sensor_node %}
-{{ sensor_node.reporting_period }}
++{{ sensor_node.reporting_period }}=
 {% else %}
 no sensor node
 {% endif %}

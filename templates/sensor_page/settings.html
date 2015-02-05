@@ -3,7 +3,6 @@
 <head>센서 세팅 가져오기</head>
 <body>
 <form id="input_form" method="post" action="/sensor/settings/">
-    {% csrf_token %}
     {% for hidden in form.hidden_fields %}
         {{ hidden }}
     {% endfor %}

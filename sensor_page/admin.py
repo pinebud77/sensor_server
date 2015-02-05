@@ -10,6 +10,7 @@ class UserContactInline(admin.TabularInline):
 class UserInfoAdmin(admin.ModelAdmin):
     inlines = [UserContactInline]
 
+
 class MeasureInline(admin.TabularInline):
     model = MeasureEntry
     extra = 3
@@ -17,6 +18,7 @@ class MeasureInline(admin.TabularInline):
 
 class SensorAdmin(admin.ModelAdmin):
     inlines = [MeasureInline]
+    #ToDO:sequence for high / low threshold
 
 
 class SensorInline(admin.TabularInline):

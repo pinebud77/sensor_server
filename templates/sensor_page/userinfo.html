@@ -38,8 +38,8 @@
         <br/>
         <strong>{{ sensor_node.name }}</strong><br/>
         MAC : {{ sensor_node.mac_address }}<br/>
-        보고주기 : {{ sensor_node.reporting_period }}초<br/>
-        정지시 알람 : {{ sensor_node.warning_period }}초<br/>
+        보고주기 : {{ sensor_node.reporting_period }}분<br/>
+        정지시 알람 : {{ sensor_node.warning_period }}분<br/>
         <br/>
         {% for sensor in sensors %}
             {% if sensor.sensor_node == sensor_node %}

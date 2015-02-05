@@ -48,11 +48,22 @@ def send_sms_for_node(sensor_node, text):
         logging.error(u'User info was not specified : ' + sensor_node.user.username)
 
 
+@csrf_exempt
 def sensor_settings(request):
     #ToDO: check expiration of the sensor user
     context = RequestContext(request)
 
     if request.method == 'POST':
+        if not 'secure_key' in request.POST:
+            logging.error('no secure_key in the request')
+            return render_to_response('sensor_page/error.html')
+        if not 'mac_address' in request.POST:
+            logging.error('no mac_address in the request')
+            return render_to_response('sensor_page/error.html')
+        if not 'type' in request.POST:
+            logging.error('no type in the request')
+            return render_to_response('sensor_page/error.html')
+
         secure_key = request.POST['secure_key']
 
         if secure_key != get_hash_from_mac(request.POST['mac_address']):
@@ -81,10 +92,18 @@ def sensor_settings(request):
         return render_to_response('sensor_page/ssettings.html', {'form': form}, context)
 
 
+@csrf_exempt
 def settings(request):
     context = RequestContext(request)
 
     if request.method == 'POST':
+        if not 'secure_key' in request.POST:
+            logging.error('no secure_key in the request')
+            return render_to_response('sensor_page/error.html')
+        if not 'mac_address' in request.POST:
+            logging.error('no mac_address in the request')
+            return render_to_response('sensor_page/error.html')
+
         secure_key = request.POST['secure_key']
 
         if secure_key != get_hash_from_mac(request.POST['mac_address']):
@@ -198,17 +217,34 @@ def check_range(measure):
 @csrf_exempt
 def input_page(request):
     if request.method == 'POST':
-        secure_key = request.POST['secure_key']
+        if not 'secure_key' in request.POST:
+            logging.error('no secure_key in the request')
+            return render_to_response('sensor_page/error.html')
+        if not 'mac_address' in request.POST:
+            logging.error('no mac_address in the request')
+            return render_to_response('sensor_page/error.html')
+        if not 'type' in request.POST:
+            logging.error('no type in the request')
+            return render_to_response('sensor_page/error.html')
+        if not 'value' in request.POST:
+            logging.error('no value in the request')
+            return render_to_response('sensor_page/error.html')
+        if not 'rssi' in request.POST:
+            logging.error('no rssi in the request')
+            return render_to_response('sensor_page/error.html')
 
-        if secure_key != get_hash_from_mac(request.POST['mac_address']):
-            return render_to_response('sensor_page/nouser.html')
+        #ToDO: auth interop issue with Arduino
+        #secure_key = request.POST.get('secure_key')
+        #if secure_key != get_hash_from_mac(request.POST['mac_address']):
+        #    logging.error("mismatching credential")
+        #    return render_to_response('sensor_page/error.html')
 
         sensor_node = SensorNode.objects.get(mac_address=request.POST['mac_address'])
         sensor = Sensor.objects.get(sensor_node=sensor_node, type=int(request.POST['type']))
 
         measure = MeasureEntry()
         measure.ip = get_client_ip(request)
-        measure.value = float(request.POST['value'])
+        measure.value = float(request.POST['value']) / 10.0
         measure.sensor = sensor
         measure.save()
 
@@ -251,6 +287,7 @@ def dynamic_png(sensor_id, display_fmt):
 
     tz = None
     delta = None
+    marker = '';
 
     try:
         sensor = Sensor.objects.get(pk=sensor_id)
@@ -259,6 +296,7 @@ def dynamic_png(sensor_id, display_fmt):
 
         if display_fmt == "hour":
             delta = datetime.timedelta(hours=1)
+            marker = '.'
         elif display_fmt == "day":
             delta = datetime.timedelta(days=1)
         elif display_fmt == "week":
@@ -270,7 +308,7 @@ def dynamic_png(sensor_id, display_fmt):
 
         try:
             measure_entries = MeasureEntry.objects.filter(sensor=sensor,
-                                                          date__gt=(date_max - delta - datetime.timedelta(days=2)))
+                                                          date__gt=(date_max - delta - datetime.timedelta(days=1)))
         except MeasureEntry.DoesNotExist:
             pass
     except Sensor.DoesNotExist:
@@ -317,7 +355,7 @@ def dynamic_png(sensor_id, display_fmt):
 
     try:
         fig, ax = plt.subplots()
-        ax.plot_date(dates, values, linestyle='solid', color='blue')
+        ax.plot_date(dates, values, linestyle='solid', color='blue', marker=marker)
 
         if highs:
             ax.plot_date([date_min, date_max], highs, linestyle='solid', color='red', linewidth=3, marker="")
@@ -342,6 +380,7 @@ def dynamic_png(sensor_id, display_fmt):
 
 
 def userinfo(request, display_fmt="day"):
+    #ToDO: print time in minute measure
     if not request.user.is_authenticated():
         return redirect('/sensor/login/')
 
@@ -370,6 +409,8 @@ def userinfo(request, display_fmt="day"):
         pass
 
     for sensor_node in sensor_nodes:
+        sensor_node.reporting_period /= 60
+        sensor_node.warning_period /= 60
         try:
             sensors += Sensor.objects.filter(sensor_node=sensor_node)
         except Sensor.DoesNotExist:
@@ -401,7 +442,7 @@ def cron_job(request):
 
     sms_tuples = []
 
-    for sensor_node in SensorNode.objects.filter(warning_count__lte=3, warning_start__lt=now):
+    for sensor_node in SensorNode.objects.filter(warning_count__lt=3, warning_start__lt=now):
         message = u'센서가 %d분동안 정보를 보내지 않았습니다. (%d/%d) (' % (sensor_node.warning_period / 60, sensor_node.warning_count+1, 3)
         message += sensor_node.user.username + u':' + sensor_node.name
         message += u')'

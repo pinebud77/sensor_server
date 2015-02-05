@@ -1,14 +1,14 @@
 <!DOCTYPE plain-text>
 {% if sensor %}
 {% if sensor.low_threshold != None %}
-{{ sensor.low_threshold }}
++{{ sensor.low_threshold }}=
 {% else %}
-none
++none=
 {% endif %}
 {% if sensor.high_threshold != None %}
-{{ sensor.high_threshold }}
++{{ sensor.high_threshold }}=
 {% else %}
-none
++none=
 {% endif %}
 {% else %}
 no sensor

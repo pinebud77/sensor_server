@@ -54,8 +54,10 @@ class SensorNode(models.Model):
     last_rssi = models.IntegerField(default=-60, null=True)
 
     def __unicode__(self):
-        return self.user.username + u' ' + self.name + u' MAC('\
-               + self.mac_address + u') warning(' + unicode(self.warning_count) + u')'
+        desc = self.user.username + u' ' + self.name + u' MAC(' + self.mac_address + u')'
+        if self.warning_count:
+            desc += u' warning(' + unicode(self.warning_count) + u')'
+        return desc
 
 
 class Sensor(models.Model):
@@ -71,13 +73,13 @@ class Sensor(models.Model):
     low_threshold = models.FloatField(default=-1000.0, null=True)
 
     def __unicode__(self):
-        repr = self.sensor_node.user.username + ':'
-        repr += self.sensor_node.name + ':'
+        desc = self.sensor_node.user.username + ':'
+        desc += self.sensor_node.name + ':'
         if self.type == 0:
-            repr += u'(온도)'
+            desc += u'(온도)'
         elif self.type == 1:
-            repr += u'(습도)'
-        return repr
+            desc += u'(습도)'
+        return desc
 
 
 class MeasureEntry(models.Model):
@@ -87,5 +89,5 @@ class MeasureEntry(models.Model):
     ip = models.IPAddressField(null=True)
 
     def __unicode__(self):
-        repr = unicode(self.value) + ':' + unicode(self.date)
-        return repr
+        desc = unicode(self.value) + ':' + unicode(self.date)
+        return desc
