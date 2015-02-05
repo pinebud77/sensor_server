@@ -1,0 +1,12 @@
+<!DOCTYPE plain-text>
++{{ sensor_node.reporting_period }}=
+{% if sensor.high_threshold != None %}
++{{ sensor.high_threshold }}=
+{% else %}
++n=
+{% endif %}
+{% if sensor.low_threshold != None %}
++{{ sensor.low_threshold }}=
+{% else %}
++n=
+{% endif %}

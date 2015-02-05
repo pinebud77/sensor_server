@@ -233,11 +233,10 @@ def input_page(request):
             logging.error('no rssi in the request')
             return render_to_response('sensor_page/error.html')
 
-        #ToDO: auth interop issue with Arduino
-        #secure_key = request.POST.get('secure_key')
-        #if secure_key != get_hash_from_mac(request.POST['mac_address']):
-        #    logging.error("mismatching credential")
-        #    return render_to_response('sensor_page/error.html')
+        secure_key = request.POST.get('secure_key')
+        if secure_key != get_hash_from_mac(request.POST['mac_address']):
+            logging.error("mismatching credential")
+            return render_to_response('sensor_page/error.html')
 
         sensor_node = SensorNode.objects.get(mac_address=request.POST['mac_address'])
         sensor = Sensor.objects.get(sensor_node=sensor_node, type=int(request.POST['type']))
@@ -264,7 +263,12 @@ def input_page(request):
         logging.debug(u'measurement saved : ' + sensor.sensor_node.name + ':' + unicode(sensor.type)
                       + u':' + unicode(sensor_node.last_rssi))
 
-        return render_to_response('sensor_page/saved.html')
+        context_dict = {
+            'sensor': sensor,
+            'sensor_node': sensor_node,
+        }
+
+        return render_to_response('sensor_page/saved.txt', context_dict)
 
     else:
         form = InputForm()
