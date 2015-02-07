@@ -48,86 +48,6 @@ def send_sms_for_node(sensor_node, text):
         logging.error(u'User info was not specified : ' + sensor_node.user.username)
 
 
-@csrf_exempt
-def sensor_settings(request):
-    #ToDO: check expiration of the sensor user
-    context = RequestContext(request)
-
-    if request.method == 'POST':
-        if not 'secure_key' in request.POST:
-            logging.error('no secure_key in the request')
-            return render_to_response('sensor_page/error.html')
-        if not 'mac_address' in request.POST:
-            logging.error('no mac_address in the request')
-            return render_to_response('sensor_page/error.html')
-        if not 'type' in request.POST:
-            logging.error('no type in the request')
-            return render_to_response('sensor_page/error.html')
-
-        secure_key = request.POST['secure_key']
-
-        if secure_key != get_hash_from_mac(request.POST['mac_address']):
-            return render_to_response('sensor_page/nouser.html')
-
-        sensor = None
-
-        try:
-            sensor_node = SensorNode.objects.get(mac_address=request.POST['mac_address'])
-            try:
-                sensor = Sensor.objects.get(sensor_node=sensor_node, type=int(request.POST['type']))
-            except Sensor.DoesNotExist:
-                pass
-        except SensorNode.DoesNotExist:
-            pass
-
-        context_dict = {
-            'sensor': sensor,
-            }
-
-        logging.debug(u'sensor dispatched sensor setting : ' + unicode(sensor))
-
-        return render_to_response('sensor_page/ssettings_values.txt', context_dict, context)
-    else:
-        form = SensorSettingForm()
-        return render_to_response('sensor_page/ssettings.html', {'form': form}, context)
-
-
-@csrf_exempt
-def settings(request):
-    context = RequestContext(request)
-
-    if request.method == 'POST':
-        if not 'secure_key' in request.POST:
-            logging.error('no secure_key in the request')
-            return render_to_response('sensor_page/error.html')
-        if not 'mac_address' in request.POST:
-            logging.error('no mac_address in the request')
-            return render_to_response('sensor_page/error.html')
-
-        secure_key = request.POST['secure_key']
-
-        if secure_key != get_hash_from_mac(request.POST['mac_address']):
-            return render_to_response('sensor_page/nouser.html')
-
-        sensor_node = None
-
-        try:
-            sensor_node = SensorNode.objects.get(mac_address=request.POST['mac_address'])
-        except SensorNode.DoesNotExist:
-            pass
-
-        context_dict = {
-            'sensor_node': sensor_node,
-            }
-
-        logging.debug(u'sensor node dispatched setting : ' + unicode(sensor_node))
-
-        return render_to_response('sensor_page/settings_values.txt', context_dict, context)
-    else:
-        form = SettingForm()
-        return render_to_response('sensor_page/settings.html', {'form': form}, context)
-
-
 def login_page(request):
     context = RequestContext(request)
 
@@ -197,9 +117,9 @@ def check_range(measure):
     sensor = measure.sensor
 
     report = False
-    if measure.value > sensor.high_threshold:
+    if sensor.high_threshold is not None and measure.value > sensor.high_threshold:
         report = True
-    elif measure.value < sensor.low_threshold:
+    elif sensor.low_threshold is not None and measure.value < sensor.low_threshold:
         report = True
 
     if report:
@@ -242,7 +162,6 @@ def input_page(request):
         sensor = Sensor.objects.get(sensor_node=sensor_node, type=int(request.POST['type']))
 
         measure = MeasureEntry()
-        measure.ip = get_client_ip(request)
         measure.value = float(request.POST['value']) / 10.0
         measure.sensor = sensor
         measure.save()
@@ -250,6 +169,7 @@ def input_page(request):
         sensor_node.last_update = measure.date
         sensor_node.warning_start = measure.date + datetime.timedelta(seconds=sensor_node.warning_period)
         sensor_node.last_rssi = int(request.POST['rssi'])
+        sensor_node.last_ip = get_client_ip(request)
         sensor_node.save()
 
         check_first_and_resume(measure)
@@ -291,7 +211,7 @@ def dynamic_png(sensor_id, display_fmt):
 
     tz = None
     delta = None
-    marker = '';
+    marker = ''
 
     try:
         sensor = Sensor.objects.get(pk=sensor_id)
@@ -331,19 +251,24 @@ def dynamic_png(sensor_id, display_fmt):
     ymax = -1000.0
     ymin = 1000.0
 
-    if sensor.high_threshold != 1000.0:
+    if sensor.high_threshold is not None:
         highs = [sensor.high_threshold, sensor.high_threshold]
-        ymax = highs[0] + 10
-    if sensor.low_threshold != -1000.0:
+        ymax = sensor.high_threshold + 3
+    if sensor.low_threshold is not None:
         lows = [sensor.low_threshold, sensor.low_threshold]
-        ymin = lows[0] - 10
+        ymin = sensor.low_threshold - 3
 
     date_max = date_max.replace(tzinfo=None)
     date_min = date_min.replace(tzinfo=None)
 
+    mesaure_delta = datetime.timedelta(seconds=sensor.sensor_node.warning_period)
+
     for measure in measure_entries:
         measure.date = measure.date.replace(tzinfo=None)
         measure.date += tz.utcoffset(measure.date)
+        if dates and dates[-1] < measure.date - mesaure_delta:
+            dates.append(dates[-1])
+            values.append(None)
         dates.append(measure.date)
         values.append(measure.value)
 
@@ -384,7 +309,6 @@ def dynamic_png(sensor_id, display_fmt):
 
 
 def userinfo(request, display_fmt="day"):
-    #ToDO: print time in minute measure
     if not request.user.is_authenticated():
         return redirect('/sensor/login/')
 
@@ -435,9 +359,6 @@ def userinfo(request, display_fmt="day"):
     }
 
     return render_to_response('sensor_page/userinfo.html', context_dict, context)
-
-
-#ToDO: add cronjob to check Munjanara account
 
 
 def cron_job(request):

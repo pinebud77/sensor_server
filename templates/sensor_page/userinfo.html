@@ -52,13 +52,13 @@
                 {% endif %}
                 <br/>
                 제한(
-                {% if sensor.low_threshold != -1000.0 %}
+                {% if sensor.low_threshold != None %}
                 {{ sensor.low_threshold }}
                 {% else %}
                 없음
                 {% endif %}
                 ~
-                {% if sensor.high_threshold != 1000.0 %}
+                {% if sensor.high_threshold != None %}
                 {{ sensor.high_threshold }}
                 {% else %}
                 없음

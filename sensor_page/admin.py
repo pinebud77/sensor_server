@@ -18,12 +18,12 @@ class MeasureInline(admin.TabularInline):
 
 class SensorAdmin(admin.ModelAdmin):
     inlines = [MeasureInline]
-    #ToDO:sequence for high / low threshold
 
 
 class SensorInline(admin.TabularInline):
     model = Sensor
     extra = 2
+    fields = ['type', 'low_threshold', 'high_threshold']
 
 
 class SensorNodeAdmin(admin.ModelAdmin):

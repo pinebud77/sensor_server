@@ -23,5 +23,5 @@ class InputForm(forms.Form):
     secure_key = forms.CharField(max_length=50, label=u"보안키 : ")
     mac_address = forms.CharField(max_length=20, label=u"MAC주소 : ")
     type = forms.IntegerField(label=u"형식 : ")
-    value = forms.CharField(max_length=100, label=u"측정값 : ")
+    value = forms.CharField(max_length=100, label=u"측정값*10 : ")
     rssi = forms.CharField(max_length=10, label=u'RSSI : ')

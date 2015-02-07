@@ -10,7 +10,7 @@ import pytz
 
 class UserInfo(models.Model):
     user = models.ForeignKey(User)
-    expire_date = models.DateField(default=datetime.date(3000, 12, 31), null=True)
+    expire_date = models.DateField(default=None, null=True, blank=True)
 
     TZ_CHOICES = [(tz, tz) for tz in pytz.all_timezones]
     timezone = models.CharField(max_length=30, default='Asia/Seoul', choices=TZ_CHOICES)
@@ -46,12 +46,13 @@ class SensorNode(models.Model):
     name = models.CharField(max_length=20)
     mac_address = models.CharField(max_length=20, unique=True)
     reporting_period = models.IntegerField(default=600)
-    warning_period = models.IntegerField(default=3600, null=True)
+    warning_period = models.IntegerField(default=3600, null=True, blank=True)
     last_update = models.DateTimeField(auto_now_add=True)
-    warning_start = models.DateTimeField(default=datetime.datetime(3000, 12, 31), null=True)
-    last_warning_date = models.DateTimeField(auto_now_add=True, null=True)
-    warning_count = models.IntegerField(default=0, null=True)
-    last_rssi = models.IntegerField(default=-60, null=True)
+    warning_start = models.DateTimeField(default=None, null=True, blank=True)
+    last_warning_date = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    warning_count = models.IntegerField(default=0)
+    last_rssi = models.IntegerField(default=-60)
+    last_ip = models.IPAddressField(default=None, null=True, blank=True)
 
     def __unicode__(self):
         desc = self.user.username + u' ' + self.name + u' MAC(' + self.mac_address + u')'
@@ -69,8 +70,8 @@ class Sensor(models.Model):
         (2, '압력'),
     )
     type = models.IntegerField(choices=SENSOR_TYPE_CHOICES)
-    high_threshold = models.FloatField(default=1000.0, null=True)
-    low_threshold = models.FloatField(default=-1000.0, null=True)
+    high_threshold = models.FloatField(default=None, null=True, blank=True)
+    low_threshold = models.FloatField(default=None, null=True, blank=True)
 
     def __unicode__(self):
         desc = self.sensor_node.user.username + ':'
@@ -86,7 +87,6 @@ class MeasureEntry(models.Model):
     sensor = models.ForeignKey(Sensor)
     value = models.FloatField()
     date = models.DateTimeField('measured date', auto_now_add=True, db_index=True)
-    ip = models.IPAddressField(null=True)
 
     def __unicode__(self):
         desc = unicode(self.value) + ':' + unicode(self.date)

@@ -8,7 +8,5 @@ urlpatterns = patterns('',
                        url(r'^userinfo/(?P<display_fmt>\w+)/', views.userinfo),
                        url(r'^userinfo/', views.userinfo),
                        url(r'^input/', views.input_page),
-                       url(r'^settings/', views.settings),
-                       url(r'^ssettings/', views.sensor_settings),
                        url(r'', views.userinfo),
                        )
