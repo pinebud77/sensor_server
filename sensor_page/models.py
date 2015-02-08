@@ -6,10 +6,8 @@ import datetime
 import pytz
 
 
-#ToDO: consider DB optimization
-
 class UserInfo(models.Model):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, db_index=True)
     expire_date = models.DateField(default=None, null=True, blank=True)
 
     TZ_CHOICES = [(tz, tz) for tz in pytz.all_timezones]
@@ -26,7 +24,7 @@ class UserInfo(models.Model):
 
 
 class UserContact(models.Model):
-    user_info = models.ForeignKey(UserInfo)
+    user_info = models.ForeignKey(UserInfo, db_index=True)
     phone_number = models.CharField(max_length=30)
     send_sms = models.BooleanField(default=True)
 
@@ -42,7 +40,7 @@ class UserContact(models.Model):
 
 
 class SensorNode(models.Model):
-    user = models.ForeignKey(User)
+    user = models.ForeignKey(User, db_index=True)
     name = models.CharField(max_length=20)
     mac_address = models.CharField(max_length=20, unique=True)
     reporting_period = models.IntegerField(default=600)
@@ -65,7 +63,7 @@ class SensorNode(models.Model):
 
 
 class Sensor(models.Model):
-    sensor_node = models.ForeignKey(SensorNode)
+    sensor_node = models.ForeignKey(SensorNode, db_index=True)
 
     SENSOR_TYPE_CHOICES = (
         (0, '온도'),
@@ -87,7 +85,8 @@ class Sensor(models.Model):
 
 
 class MeasureEntry(models.Model):
-    sensor = models.ForeignKey(Sensor)
+    #ToDO: consider DB optimization using raw SQL for measure entries
+    sensor = models.ForeignKey(Sensor, db_index=True)
     value = models.FloatField()
     date = models.DateTimeField('measured date', auto_now_add=True, db_index=True)
 

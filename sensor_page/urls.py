@@ -3,6 +3,7 @@ from sensor_page import views
 
 urlpatterns = patterns('',
                        url(r'^login/', views.login_page),
+                       url(r'^test_page_9927/', views.test_page),
                        url(r'^logout/', views.logout_page),
                        url(r'^cronjob/', views.cron_job),
                        url(r'^userinfo/(?P<display_fmt>\w+)/(?P<time_offset>\w+)/', views.user_info),
