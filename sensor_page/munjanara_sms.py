@@ -19,7 +19,7 @@ def send_sms(receiver, message):
     receiver = normalize_phone_number(receiver)
     values = {
         'userid': 'chiknhed',
-        'passwd': 'shfur2@@',
+        'passwd': 'sensortest',
         'sender': '01090344820',
         'receiver': receiver,
         'message': message.encode('EUC-KR'),

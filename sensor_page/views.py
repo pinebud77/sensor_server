@@ -38,8 +38,8 @@ import matplotlib.pyplot as plt
 
 def send_sms_for_node(sensor_node, text):
     try:
-        user_info = UserInfo.objects.get(user=sensor_node.user)
-        user_contacts = UserContact.objects.filter(user_info=user_info)
+        userinfo = UserInfo.objects.get(user=sensor_node.user)
+        user_contacts = UserContact.objects.filter(user_info=userinfo)
         for contact in user_contacts:
             if contact.send_sms:
                 send_sms(contact.phone_number, text)
@@ -212,7 +212,7 @@ class UtcTzinfo(datetime.tzinfo):
 
 def dynamic_png(sensor_id, display_fmt, time_offset):
     #TODO: use localization for date format
-    #TODO: add date move functionality
+    #TODO: indicate None in case there's no data in the date range
     sensor = None
     measure_entries = None
     date_max = datetime.datetime.utcnow()
@@ -224,8 +224,8 @@ def dynamic_png(sensor_id, display_fmt, time_offset):
 
     try:
         sensor = Sensor.objects.get(pk=sensor_id)
-        user_info = UserInfo.objects.get(user=sensor.sensor_node.user)
-        tz = pytz.timezone(user_info.timezone)
+        userinfo = UserInfo.objects.get(user=sensor.sensor_node.user)
+        tz = pytz.timezone(userinfo.timezone)
 
         if display_fmt == "hour":
             delta = datetime.timedelta(hours=1)
@@ -246,7 +246,8 @@ def dynamic_png(sensor_id, display_fmt, time_offset):
 
         try:
             measure_entries = MeasureEntry.objects.filter(sensor=sensor,
-                                                          date__gt=(date_max - delta - datetime.timedelta(days=1)))
+                                                          date__gt=(date_max - delta - datetime.timedelta(days=1)),
+                                                          date__lt=(date_max + datetime.timedelta(days=1)))
         except MeasureEntry.DoesNotExist:
             pass
     except Sensor.DoesNotExist:
