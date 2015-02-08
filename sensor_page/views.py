@@ -232,8 +232,6 @@ def dynamic_png(sensor, display_fmt, time_offset):
     date_max = datetime.datetime.utcnow()
     date_max = date_max.replace(tzinfo=pytz.utc)
 
-    tz = None
-    delta = None
     marker = ''
 
     userinfo = UserInfo.objects.get(user=sensor.sensor_node.user)
@@ -295,6 +293,8 @@ def dynamic_png(sensor, display_fmt, time_offset):
     date_max += tz.utcoffset(date_max)
     date_min += tz.utcoffset(date_min)
 
+    data_in_range = False
+
     for measure in measure_entries:
         measure.date = measure.date.replace(tzinfo=None)
         measure.date += tz.utcoffset(measure.date)
@@ -312,6 +312,10 @@ def dynamic_png(sensor, display_fmt, time_offset):
             margin = (y_max - y_min) * 0.1
             if margin < 1.0:
                 margin = 1.0
+            data_in_range = True
+
+    if not data_in_range:
+        return None
 
     try:
         fig, ax = plt.subplots()
