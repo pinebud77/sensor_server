@@ -83,19 +83,20 @@ def get_client_ip(request):
     return ip
 
 
-def check_first_and_resume(measure):
-    first = False
+def handle_first_and_resume(measure, first):
     resume = False
-
-    measures_count = MeasureEntry.objects.filter(sensor=measure.sensor).count()
-    if measures_count <= 1:
-        first = True
 
     sensor_node = measure.sensor.sensor_node
     if sensor_node.warning_count:
         sensor_node.warning_count = 0
         sensor_node.save()
         resume = True
+
+    if first:
+        if sensor_node.first_report_count != 0:
+            first = False
+        sensor_node.first_report_count += 1
+        sensor_node.save()
 
     if first or resume:
         if first:
@@ -152,6 +153,9 @@ def input_page(request):
         if not 'rssi' in request.POST:
             logging.error('no rssi in the request')
             return render_to_response('sensor_page/error.html')
+        if not 'first' in request.POST:
+            logging.error('no first in the request')
+            return render_to_response('sensor_page/error.html')
 
         secure_key = request.POST.get('secure_key')
         if secure_key != get_hash_from_mac(request.POST['mac_address']):
@@ -172,7 +176,11 @@ def input_page(request):
         sensor_node.last_ip = get_client_ip(request)
         sensor_node.save()
 
-        check_first_and_resume(measure)
+        first = False
+        if request.POST.get('first') == '1':
+            first = True
+
+        handle_first_and_resume(measure, first)
         check_range(measure)
 
         if sensor_node.last_rssi < -80:
@@ -202,8 +210,9 @@ class UtcTzinfo(datetime.tzinfo):
     def olsen_name(self): return 'UTC'
 
 
-def dynamic_png(sensor_id, display_fmt):
+def dynamic_png(sensor_id, display_fmt, time_offset):
     #TODO: use localization for date format
+    #TODO: add date move functionality
     sensor = None
     measure_entries = None
     date_max = datetime.datetime.utcnow()
@@ -220,15 +229,20 @@ def dynamic_png(sensor_id, display_fmt):
 
         if display_fmt == "hour":
             delta = datetime.timedelta(hours=1)
+            date_max -= datetime.timedelta(hours=time_offset)
             marker = '.'
         elif display_fmt == "day":
             delta = datetime.timedelta(days=1)
+            date_max -= datetime.timedelta(days=time_offset)
         elif display_fmt == "week":
             delta = datetime.timedelta(weeks=1)
+            date_max -= datetime.timedelta(weeks=time_offset)
         elif display_fmt == "month":
             delta = datetime.timedelta(weeks=4)
+            date_max -= datetime.timedelta(weeks=time_offset*4)
         else:
             delta = datetime.timedelta(days=365)
+            date_max -= datetime.timedelta(days=time_offset*365)
 
         try:
             measure_entries = MeasureEntry.objects.filter(sensor=sensor,
@@ -273,11 +287,10 @@ def dynamic_png(sensor_id, display_fmt):
         values.append(measure.value)
 
         if measure.date >= date_min:
-            if measure.value > ymax:
-                ymax = measure.value + 10
-            if measure.value < ymin:
-                ymin = measure.value - 10
-
+            if measure.value > ymax - 3:
+                ymax = measure.value + 3
+            if measure.value < ymin + 3:
+                ymin = measure.value - 3
 
     date_max += tz.utcoffset(date_max)
     date_min += tz.utcoffset(date_min)
@@ -308,7 +321,7 @@ def dynamic_png(sensor_id, display_fmt):
         plt.close()
 
 
-def userinfo(request, display_fmt="day"):
+def user_info(request, display_fmt="day", time_offset=0):
     if not request.user.is_authenticated():
         return redirect('/sensor/login/')
 
@@ -346,7 +359,7 @@ def userinfo(request, display_fmt="day"):
 
     for sensor in sensors:
         try:
-            sensor.pic = dynamic_png(sensor.id, display_fmt)
+            sensor.pic = dynamic_png(sensor.id, display_fmt, int(time_offset))
         except MeasureEntry.DoesNotExist:
             pass
 
@@ -356,6 +369,8 @@ def userinfo(request, display_fmt="day"):
         'sensor_nodes': sensor_nodes,
         'sensors': sensors,
         'display_fmt': display_fmt,
+        'time_offset_prev': int(time_offset) + 1,
+        'time_offset_next': int(time_offset) - 1,
     }
 
     return render_to_response('sensor_page/userinfo.html', context_dict, context)

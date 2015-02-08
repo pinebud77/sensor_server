@@ -53,11 +53,14 @@ class SensorNode(models.Model):
     warning_count = models.IntegerField(default=0)
     last_rssi = models.IntegerField(default=-60)
     last_ip = models.IPAddressField(default=None, null=True, blank=True)
+    first_report_count = models.IntegerField(default=0)
 
     def __unicode__(self):
         desc = self.user.username + u' ' + self.name + u' MAC(' + self.mac_address + u')'
         if self.warning_count:
             desc += u' warning(' + unicode(self.warning_count) + u')'
+        if self.first_report_count:
+            desc += u' reset_count(' + unicode(self.first_report_count) + u')'
         return desc
 
 

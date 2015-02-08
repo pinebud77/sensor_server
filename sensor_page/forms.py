@@ -25,3 +25,4 @@ class InputForm(forms.Form):
     type = forms.IntegerField(label=u"형식 : ")
     value = forms.CharField(max_length=100, label=u"측정값*10 : ")
     rssi = forms.CharField(max_length=10, label=u'RSSI : ')
+    first = forms.IntegerField(label=u"reset_first")

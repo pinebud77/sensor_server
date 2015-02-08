@@ -33,6 +33,13 @@
     <a href="/sensor/userinfo/year/">1년</a>
     {% endif %}
     <br/>
+    날짜이동 :
+    <a href="/sensor/userinfo/{{ display_fmt }}/{{ time_offset_prev }}/">이전</a>
+    {% if time_offset_next != -1 %}
+     - <a href="/sensor/userinfo/{{ display_fmt }}/{{ time_offset_next }}/">이후</a>
+    {% endif %}
+
+    <br/>
 
     {% for sensor_node in sensor_nodes %}
         <br/>
