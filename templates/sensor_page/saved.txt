@@ -1,4 +1,3 @@
-<!DOCTYPE plain-text>
 +{{ sensor_node.reporting_period }}=
 {% if sensor.high_threshold != None %}
 +{{ sensor.high_threshold }}=

@@ -2,9 +2,10 @@
 
 from django.contrib.auth import authenticate, login, logout
 
-from django.template import RequestContext
+from django.template import RequestContext, loader, Context
 from django.shortcuts import render_to_response, redirect
 from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponse
 
 from sensor_page.models import *
 from sensor_page.forms import *
@@ -169,10 +170,25 @@ def input_page(request):
         secure_key = request.POST.get('secure_key')
         if secure_key != get_hash_from_mac(request.POST['mac_address']):
             logging.error("mismatching credential")
-            return render_to_response('sensor_page/error.html')
+            t = loader.get_template('sensor_page/error.txt')
+            c = Context({})
+            return HttpResponse(t.render(c), content_type='text/plain')
 
-        sensor_node = SensorNode.objects.get(mac_address=request.POST['mac_address'])
-        sensor = Sensor.objects.get(sensor_node=sensor_node, type=int(request.POST['type']))
+        try:
+            sensor_node = SensorNode.objects.get(mac_address=request.POST['mac_address'])
+        except SensorNode.DoesNotExist:
+            logging.error(u'No Sensor Node for MAC ' + mac_address)
+            t = loader.get_template('sensor_page/error.txt')
+            c = Context({})
+            return HttpResponse(t.render(c), content_type='text/plain')
+
+        try:
+            sensor = Sensor.objects.get(sensor_node=sensor_node, type=int(request.POST['type']))
+        except Sensor.DoesNotExist:
+            logging.error(u'No Sensor for MAC ' + mac_address)
+            t = loader.get_template('sensor_page/error.txt')
+            c = Context({})
+            return HttpResponse(t.render(c), content_type='text/plain')
 
         measure = MeasureEntry()
         measure.value = float(request.POST['value']) / 10.0
@@ -192,20 +208,21 @@ def input_page(request):
         handle_first_and_resume(measure, first)
         check_range(measure)
 
-        if sensor_node.last_rssi < -80:
-            logging.warning(u'RSSI too low : ' + unicode(sensor.sensor_node))
-            #ToDO: handle low rssi
-            pass
-
-        logging.debug(u'measurement saved : ' + sensor.sensor_node.name + ':' + unicode(sensor.type)
-                      + u':' + unicode(sensor_node.last_rssi))
+        if sensor_node.last_rssi < -85:
+            logging.warning(u'RSSI too low : ' + unicode(sensor_node))
+            text = u'센서노드의 무선 세기가 낮습니다. '
+            text += sensor_node.user.username + u':'
+            text += sensor_node.name + u' (' + unicode(sensor_node.last_rssi) + u')'
+            send_sms_for_node(sensor_node, text)
 
         context_dict = {
             'sensor': sensor,
             'sensor_node': sensor_node,
         }
 
-        return render_to_response('sensor_page/saved.txt', context_dict)
+        t = loader.get_template('sensor_page/saved.txt')
+        c = Context(context_dict)
+        return HttpResponse(t.render(c), content_type='text/plain')
 
     else:
         form = InputForm()
