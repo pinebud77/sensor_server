@@ -8,6 +8,28 @@ class LoginForm(forms.Form):
     password = forms.CharField(label=u"암호 : ", widget=forms.PasswordInput())
 
 
+class AppLoginForm(forms.Form):
+    username = forms.CharField(max_length=50, label=u"사용자 : ")
+    password = forms.CharField(label=u"암호 : ", widget=forms.PasswordInput())
+    secure_key = forms.CharField(max_length=50, label=u"보안키 : ")
+
+
+class AppRegisterForm(forms.Form):
+    username = forms.CharField(max_length=50, label=u"사용자 : ")
+    password = forms.CharField(label=u"암호 : ", widget=forms.PasswordInput())
+    secure_key = forms.CharField(max_length=50, label=u"보안키 : ")
+    family_name = forms.CharField(max_length=50, label=u"성 : ")
+    first_name = forms.CharField(max_length=50, label=u"이름 : ")
+    email = forms.CharField(max_length=50, label=u"이메일 : ")
+
+
+class AppPhoneForm(forms.Form):
+    username = forms.CharField(max_length=50, label=u"사용자 : ")
+    password = forms.CharField(label=u"암호 : ", widget=forms.PasswordInput())
+    secure_key = forms.CharField(max_length=50, label=u"보안키 : ")
+    phone_number = forms.CharField(max_length=50, label=u"전화번호 : ")
+
+
 class SettingForm(forms.Form):
     secure_key = forms.CharField(max_length=50, label=u"보안키 : ")
     mac_address = forms.CharField(max_length=20, label=u"MAC주소 : ")

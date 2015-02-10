@@ -6,6 +6,7 @@ from django.template import RequestContext, loader, Context
 from django.shortcuts import render_to_response, redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
+from django.utils.encoding import smart_bytes
 
 from sensor_page.models import *
 from sensor_page.forms import *
@@ -69,6 +70,182 @@ def login_page(request):
     else:
         form = LoginForm()
         return render_to_response('sensor_page/login.html', {'form': form}, context)
+
+
+@csrf_exempt
+def app_phone_page(request):
+    context = RequestContext(request)
+    if request.method == 'POST':
+        if not 'username' in request.POST:
+            logging.error('no username in the request')
+            return render_to_response('sensor_page/error.html')
+        if not 'password' in request.POST:
+            logging.error('no password in the request')
+            return render_to_response('sensor_page/error.html')
+        if not 'secure_key' in request.POST:
+            logging.error('no secure_key in the request')
+            return render_to_response('sensor_page/error.txt')
+        if not 'phone_number' in request.POST:
+            logging.error('no phone_number in the request')
+            return render_to_response('sensor_page/error.txt')
+
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        secure_key = request.POST.get('secure_key')
+
+        user = authenticate(username=username, password=password)
+        if not user:
+            logging.error(u'User login failed ' + username)
+            t = loader.get_template('sensor_page/error.txt')
+            c = Context({})
+            return HttpResponse(t.render(c), content_type='text/plain')
+        if not user.is_active:
+            logging.error(u'User not active ' + username)
+            t = loader.get_template('sensor_page/error.txt')
+            c = Context({})
+            return HttpResponse(t.render(c), content_type='text/plain')
+        if secure_key != get_app_hash(username, password):
+            logging.error(u'Secure hash failed ' + username)
+            t = loader.get_template('sensor_page/error.txt')
+            c = Context({})
+            return HttpResponse(t.render(c), content_type='text/plain')
+
+        userinfo = UserInfo.objects.filter(user=user)
+        if not userinfo:
+            logging.error(u'Secure hash failed ' + username)
+            t = loader.get_template('sensor_page/error.txt')
+            c = Context({})
+            return HttpResponse(t.render(c), content_type='text/plain')
+
+        phone_number = request.POST.get('phone_number')
+
+        contact = UserContact()
+        contact.user_info = userinfo[0]
+        contact.phone_number = phone_number
+        contact.phone_type = 0
+        contact.save()
+
+        t = loader.get_template('sensor_page/success.txt')
+        c = Context({})
+        return HttpResponse(t.render(c), content_type='text/plain')
+
+    else:
+        form = AppRegisterForm()
+        return render_to_response('sensor_page/input.html', {'form': form}, context)
+
+
+@csrf_exempt
+def app_register_page(request):
+    context = RequestContext(request)
+    if request.method == 'POST':
+        if not 'username' in request.POST:
+            logging.error('no username in the request')
+            return render_to_response('sensor_page/error.html')
+        if not 'password' in request.POST:
+            logging.error('no password in the request')
+            return render_to_response('sensor_page/error.html')
+        if not 'secure_key' in request.POST:
+            logging.error('no secure_key in the request')
+            return render_to_response('sensor_page/error.txt')
+        if not 'family_name' in request.POST:
+            logging.error('no family_name in the request')
+            return render_to_response('sensor_page/error.txt')
+        if not 'first_name' in request.POST:
+            logging.error('no first_name in the request')
+            return render_to_response('sensor_page/error.txt')
+        if not 'email' in request.POST:
+            logging.error('no email in the request')
+            return render_to_response('sensor_page/error.txt')
+
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        secure_key = request.POST.get('secure_key')
+
+        if secure_key != get_app_hash(username, password):
+            logging.error(u'Secure hash failed ' + username)
+            logging.error(secure_key)
+            t = loader.get_template('sensor_page/error.txt')
+            c = Context({})
+            return HttpResponse(t.render(c), content_type='text/plain')
+
+        try:
+            User.objects.get(username=username)
+            found = True
+        except User.DoesNotExist:
+            found = False
+
+        if found:
+            logging.error(u'Username exist ' + username)
+            t = loader.get_template('sensor_page/error.txt')
+            c = Context({})
+            return HttpResponse(t.render(c), content_type='text/plain')
+
+        family_name = request.POST.get('family_name')
+        first_name = request.POST.get('first_name')
+        email = request.POST.get('email')
+
+        user = User.objects.create_user(username, email, password)
+        user.is_staff = False
+        user.is_active = True
+        user.last_name = family_name
+        user.first_name = first_name
+        user.save()
+
+        userinfo = UserInfo()
+        userinfo.user = user
+        userinfo.save()
+
+        t = loader.get_template('sensor_page/success.txt')
+        c = Context({})
+        return HttpResponse(t.render(c), content_type='text/plain')
+
+    else:
+        form = AppRegisterForm()
+        return render_to_response('sensor_page/input.html', {'form': form}, context)
+
+
+@csrf_exempt
+def app_login_page(request):
+    context = RequestContext(request)
+    if request.method == 'POST':
+        if not 'username' in request.POST:
+            logging.error('no username in the request')
+            return render_to_response('sensor_page/error.html')
+        if not 'password' in request.POST:
+            logging.error('no password in the request')
+            return render_to_response('sensor_page/error.html')
+        if not 'secure_key' in request.POST:
+            logging.error('no secure_key in the request')
+            return render_to_response('sensor_page/error.txt')
+
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        secure_key = request.POST.get('secure_key')
+
+        user = authenticate(username=username, password=password)
+        if not user:
+            logging.error(u'User login failed ' + username)
+            t = loader.get_template('sensor_page/error.txt')
+            c = Context({})
+            return HttpResponse(t.render(c), content_type='text/plain')
+        if not user.is_active:
+            logging.error(u'User not active ' + username)
+            t = loader.get_template('sensor_page/error.txt')
+            c = Context({})
+            return HttpResponse(t.render(c), content_type='text/plain')
+        if secure_key != get_app_hash(username, password):
+            logging.error(u'Secure hash failed ' + username)
+            t = loader.get_template('sensor_page/error.txt')
+            c = Context({})
+            return HttpResponse(t.render(c), content_type='text/plain')
+
+        t = loader.get_template('sensor_page/success.txt')
+        c = Context({})
+        return HttpResponse(t.render(c), content_type='text/plain')
+
+    else:
+        form = AppLoginForm()
+        return render_to_response('sensor_page/input.html', {'form': form}, context)
 
 
 def test_page(request):
@@ -177,7 +354,7 @@ def input_page(request):
         try:
             sensor_node = SensorNode.objects.get(mac_address=request.POST['mac_address'])
         except SensorNode.DoesNotExist:
-            logging.error(u'No Sensor Node for MAC ' + mac_address)
+            logging.error(u'No Sensor Node for MAC ' + unicode(mac_address))
             t = loader.get_template('sensor_page/error.txt')
             c = Context({})
             return HttpResponse(t.render(c), content_type='text/plain')
@@ -185,7 +362,7 @@ def input_page(request):
         try:
             sensor = Sensor.objects.get(sensor_node=sensor_node, type=int(request.POST['type']))
         except Sensor.DoesNotExist:
-            logging.error(u'No Sensor for MAC ' + mac_address)
+            logging.error(u'No Sensor for MAC ' + unicode(mac_address))
             t = loader.get_template('sensor_page/error.txt')
             c = Context({})
             return HttpResponse(t.render(c), content_type='text/plain')
