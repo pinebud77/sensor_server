@@ -55,6 +55,12 @@ def login_page(request):
     context = RequestContext(request)
 
     if request.method == 'POST':
+        fields = ('username', 'password')
+        if not check_fields_in_post(fields, request.POST):
+            t = loader.get_template('sensor_page/error.txt')
+            c = Context({})
+            return HttpResponse(t.render(c), content_type='text/plain')
+
         username = request.POST['username']
         password = request.POST['password']
 
@@ -72,22 +78,131 @@ def login_page(request):
         return render_to_response('sensor_page/login.html', {'form': form}, context)
 
 
+def check_fields_in_post(fields, post):
+    for field in fields:
+        if not field in post:
+            logging.error('no ' + field + 'in the request')
+            return False
+
+    return True
+
+
+@csrf_exempt
+def app_node_page(request):
+    context = RequestContext(request)
+    if request.method == 'POST':
+        fields = ('username', 'password', 'secure_key', 't_low', 't_high', 'h_low', 'h_high',
+                  'name', 'report_period', 'alarm_period', 'mac_address')
+        if not check_fields_in_post(fields, request.POST):
+            t = loader.get_template('sensor_page/error.txt')
+            c = Context({})
+            return HttpResponse(t.render(c), content_type='text/plain')
+
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        secure_key = request.POST.get('secure_key')
+
+        user = authenticate(username=username, password=password)
+        if not user:
+            logging.error(u'User login failed ' + username)
+            t = loader.get_template('sensor_page/error.txt')
+            c = Context({})
+            return HttpResponse(t.render(c), content_type='text/plain')
+        if not user.is_active:
+            logging.error(u'User not active ' + username)
+            t = loader.get_template('sensor_page/error.txt')
+            c = Context({})
+            return HttpResponse(t.render(c), content_type='text/plain')
+        if secure_key != get_app_hash(username, password):
+            logging.error(u'Secure hash failed ' + username)
+            t = loader.get_template('sensor_page/error.txt')
+            c = Context({})
+            return HttpResponse(t.render(c), content_type='text/plain')
+
+        mac_address = request.POST.get('mac_address')
+
+        try:
+            sensor_node = SensorNode.objects.get(mac_address=mac_address)
+
+            try:
+                t_sensor = Sensor.objects.get(sensor_node=sensor_node, type=0)
+            except Sensor.DoesNotExist:
+                t_sensor = Sensor()
+                t_sensor.type = 0
+                t_sensor.sensor_node = sensor_node
+
+            try:
+                h_sensor = Sensor.objects.get(sensor_node=sensor_node, type=1)
+            except Sensor.DoesNotExist:
+                h_sensor = Sensor()
+                h_sensor.type = 0
+                h_sensor.sensor_node = sensor_node
+
+        except SensorNode.DoesNotExist:
+            sensor_node = SensorNode()
+            sensor_node.user = user
+
+            t_sensor = Sensor()
+            t_sensor.type = 0
+            t_sensor.sensor_node = sensor_node
+            h_sensor = Sensor()
+            h_sensor.type = 1
+            h_sensor.sensor_node = sensor_node
+
+        if user != sensor_node.user:
+            logging.error(u'sensor register from different user ' + username + u' mac ' + mac_address)
+            t = loader.get_template('sensor_page/error.txt')
+            c = Context({})
+            return HttpResponse(t.render(c), content_type='text/plain')
+
+        sensor_node.name = request.POST.get('name')
+
+        sensor_node.first_report_count = 0
+        t_sensor.low_threshold = None
+        t_sensor.high_threshold = None
+        h_sensor.low_threshold = None
+        h_sensor.high_threshold = None
+        sensor_node.warning_period = None
+
+        if request.POST.get('t_low') != 'N':
+            t_sensor.low_threshold = int(request.POST.get('t_low'))
+
+        if request.POST.get('t_high') != 'N':
+            t_sensor.high_threshold = int(request.POST.get('t_high'))
+
+        if request.POST.get('h_low') != 'N':
+            h_sensor.low_threshold = int(request.POST.get('h_low'))
+
+        if request.POST.get('h_high') != 'N':
+            h_sensor.high_threshold = int(request.POST.get('h_high'))
+
+        if request.POST.get('report_period') != 'N':
+            sensor_node.reporting_period = int(request.POST.get('report_period'))
+
+        if request.POST.get('alarm_period') != 'N':
+            sensor_node.warning_period = int(request.POST.get('alarm_period'))
+
+        sensor_node.save()
+        t_sensor.save()
+        h_sensor.save()
+
+        t = loader.get_template('sensor_page/success.txt')
+        c = Context({})
+        return HttpResponse(t.render(c), content_type='text/plain')
+
+    else:
+        return render_to_response('sensor_page/error.html', {}, context)
+
+
 @csrf_exempt
 def app_phone_page(request):
     context = RequestContext(request)
     if request.method == 'POST':
-        if not 'username' in request.POST:
-            logging.error('no username in the request')
-            return render_to_response('sensor_page/error.html')
-        if not 'password' in request.POST:
-            logging.error('no password in the request')
-            return render_to_response('sensor_page/error.html')
-        if not 'secure_key' in request.POST:
-            logging.error('no secure_key in the request')
-            return render_to_response('sensor_page/error.txt')
-        if not 'phone_number' in request.POST:
-            logging.error('no phone_number in the request')
-            return render_to_response('sensor_page/error.txt')
+        fields = ('username', 'password', 'secure_key', 'phone_number')
+        if not check_fields_in_post(fields, request.POST):
+            t = loader.get_template('sensor_page/error.txt')
+            c = Context({})
+            return HttpResponse(t.render(c), content_type='text/plain')
 
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -130,32 +245,18 @@ def app_phone_page(request):
         return HttpResponse(t.render(c), content_type='text/plain')
 
     else:
-        form = AppRegisterForm()
-        return render_to_response('sensor_page/input.html', {'form': form}, context)
+        return render_to_response('sensor_page/error.html', {}, context)
 
 
 @csrf_exempt
 def app_register_page(request):
     context = RequestContext(request)
     if request.method == 'POST':
-        if not 'username' in request.POST:
-            logging.error('no username in the request')
-            return render_to_response('sensor_page/error.html')
-        if not 'password' in request.POST:
-            logging.error('no password in the request')
-            return render_to_response('sensor_page/error.html')
-        if not 'secure_key' in request.POST:
-            logging.error('no secure_key in the request')
-            return render_to_response('sensor_page/error.txt')
-        if not 'family_name' in request.POST:
-            logging.error('no family_name in the request')
-            return render_to_response('sensor_page/error.txt')
-        if not 'first_name' in request.POST:
-            logging.error('no first_name in the request')
-            return render_to_response('sensor_page/error.txt')
-        if not 'email' in request.POST:
-            logging.error('no email in the request')
-            return render_to_response('sensor_page/error.txt')
+        fields = ('username', 'password', 'secure_key', 'family_name', 'first_name', 'email')
+        if not check_fields_in_post(fields, request.POST):
+            t = loader.get_template('sensor_page/error.txt')
+            c = Context({})
+            return HttpResponse(t.render(c), content_type='text/plain')
 
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -200,23 +301,18 @@ def app_register_page(request):
         return HttpResponse(t.render(c), content_type='text/plain')
 
     else:
-        form = AppRegisterForm()
-        return render_to_response('sensor_page/input.html', {'form': form}, context)
+        return render_to_response('sensor_page/error.html', {}, context)
 
 
 @csrf_exempt
 def app_login_page(request):
     context = RequestContext(request)
     if request.method == 'POST':
-        if not 'username' in request.POST:
-            logging.error('no username in the request')
-            return render_to_response('sensor_page/error.html')
-        if not 'password' in request.POST:
-            logging.error('no password in the request')
-            return render_to_response('sensor_page/error.html')
-        if not 'secure_key' in request.POST:
-            logging.error('no secure_key in the request')
-            return render_to_response('sensor_page/error.txt')
+        fields = ('username', 'password', 'secure_key')
+        if not check_fields_in_post(fields, request.POST):
+            t = loader.get_template('sensor_page/error.txt')
+            c = Context({})
+            return HttpResponse(t.render(c), content_type='text/plain')
 
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -244,8 +340,7 @@ def app_login_page(request):
         return HttpResponse(t.render(c), content_type='text/plain')
 
     else:
-        form = AppLoginForm()
-        return render_to_response('sensor_page/input.html', {'form': form}, context)
+        return render_to_response('sensor_page/error.html', {}, context)
 
 
 def test_page(request):
@@ -325,24 +420,11 @@ def check_range(measure):
 @csrf_exempt
 def input_page(request):
     if request.method == 'POST':
-        if not 'secure_key' in request.POST:
-            logging.error('no secure_key in the request')
-            return render_to_response('sensor_page/error.html')
-        if not 'mac_address' in request.POST:
-            logging.error('no mac_address in the request')
-            return render_to_response('sensor_page/error.html')
-        if not 'type' in request.POST:
-            logging.error('no type in the request')
-            return render_to_response('sensor_page/error.html')
-        if not 'value' in request.POST:
-            logging.error('no value in the request')
-            return render_to_response('sensor_page/error.html')
-        if not 'rssi' in request.POST:
-            logging.error('no rssi in the request')
-            return render_to_response('sensor_page/error.html')
-        if not 'first' in request.POST:
-            logging.error('no first in the request')
-            return render_to_response('sensor_page/error.html')
+        fields = ('secure_key', 'mac_address', 'type', 'value', 'rssi', 'first')
+        if not check_fields_in_post(fields, request.POST):
+            t = loader.get_template('sensor_page/error.txt')
+            c = Context({})
+            return HttpResponse(t.render(c), content_type='text/plain')
 
         secure_key = request.POST.get('secure_key')
         if secure_key != get_hash_from_mac(request.POST['mac_address']):
