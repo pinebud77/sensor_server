@@ -13,28 +13,16 @@ from sensor_page.utils import *
 import pytz
 import datetime
 
-import os
-import StringIO
-from munjanara_sms import send_sms, send_bulk_sms
+from munjanara_sms import send_sms
 
 import logging
 import threading
 
+import cStringIO
 
-os.environ["MATPLOTLIBDATA"] = os.getcwdu()
-os.environ["MPLCONFIGDIR"] = os.getcwdu()
-import subprocess
-
-
-def no_popen(*args, **kwargs):
-    raise OSError("forbjudet")
-
-
-subprocess.Popen = no_popen
-subprocess.PIPE = None
-subprocess.STDOUT = None
-
-import matplotlib.pyplot as plt
+import matplotlib as mpl
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_agg import FigureCanvasAgg
 
 
 class SmsThread (threading.Thread):
@@ -607,30 +595,38 @@ def dynamic_png(sensor, display_fmt, time_offset):
     if not data_in_range:
         return None
 
-    try:
-        fig, ax = plt.subplots()
-        ax.plot_date(dates, values, linestyle='solid', color='blue', marker=marker)
+    mpl.rcParams['axes.edgecolor'] = 'black'
+    mpl.rcParams['axes.facecolor'] = 'white'
+    mpl.rcParams['figure.facecolor'] = '0.75'
+    mpl.rcParams['figure.edgecolor'] = 'white'
+    mpl.rcParams['figure.autolayout'] = 'True'
+    mpl.rcParams['axes.formatter.use_locale'] = 'True'
+    mpl.rcParams['savefig.edgecolor'] = 'white'
+    mpl.rcParams['savefig.facecolor'] = 'white'
 
-        if highs:
-            ax.plot_date([date_min, date_max], highs, linestyle='solid', color='red', linewidth=3, marker="")
-        if lows:
-            ax.plot_date([date_min, date_max], lows, linestyle='solid', color='red', linewidth=3, marker="")
+    fig = Figure(figsize=[7, 4])
+    fig.patch.set_alpha(0)
+    ax = fig.add_axes([0.1, 0.2, 0.85, 0.75])
 
-        ax.set_xlim(date_min, date_max)
-        ax.set_ylim(y_min, y_max)
-        ax.grid(True)
+    ax.plot_date(dates, values, linestyle='solid', color='blue', marker=marker)
 
-        fig.set_size_inches(6, 3.5)
-        fig.autofmt_xdate()
-        fig.tight_layout()
+    if highs:
+        ax.plot_date([date_min, date_max], highs, linestyle='solid', color='red', linewidth=3, marker="")
+    if lows:
+        ax.plot_date([date_min, date_max], lows, linestyle='solid', color='red', linewidth=3, marker="")
 
-        rv = StringIO.StringIO()
-        plt.savefig(rv, format="png")
-        plt.close()
+    ax.set_xlim(date_min, date_max)
+    ax.set_ylim(y_min, y_max)
+    ax.grid(True)
 
-        return """<img src="data:image/png;base64,%s"/>""" % rv.getvalue().encode("base64").strip()
-    finally:
-        plt.close()
+    fig.autofmt_xdate()
+
+    canvas = FigureCanvasAgg(fig)
+
+    buf = cStringIO.StringIO()
+    canvas.print_png(buf)
+
+    return """<img src="data:image/png;base64,%s"/>""" % buf.getvalue().encode("base64").strip()
 
 
 def user_info(request, display_fmt="day", time_offset=0):
@@ -673,10 +669,7 @@ def user_info(request, display_fmt="day", time_offset=0):
             pass
 
     for sensor in sensors:
-        try:
-            sensor.pic = dynamic_png(sensor, display_fmt, int(time_offset))
-        except MeasureEntry.DoesNotExist:
-            pass
+        sensor.pic = dynamic_png(sensor, display_fmt, int(time_offset))
 
     context_dict = {
         'username': request.user.username,
