@@ -48,15 +48,21 @@ class SmsThread (threading.Thread):
 
 
 def send_sms_for_node(sensor_node, text):
+    threads = []
     try:
         userinfo = UserInfo.objects.only('user').get(user=sensor_node.user)
         user_contacts = UserContact.objects.only('user_info', 'phone_number').filter(user_info=userinfo)
         for contact in user_contacts:
             if contact.send_sms:
-                send_sms(contact.phone_number, text)
+                t = SmsThread(contact.phone_number, text)
+                t.start()
+                threads.append(t)
                 logging.info(u'sent SMS : ' + contact.phone_number + u' : ' + text)
     except UserInfo.DoesNotExist:
         logging.error(u'User info was not specified : ' + sensor_node.user.username)
+
+    for t in threads:
+        t.join()
 
 
 def login_page(request):
@@ -540,8 +546,8 @@ def dynamic_png(sensor, display_fmt, time_offset):
 
     try:
         measure_entries = MeasureEntry.objects.defer('sensor').filter(sensor=sensor,
-                                                      date__gt=(date_max - delta - datetime.timedelta(days=1)),
-                                                      date__lt=(date_max + datetime.timedelta(days=1)))
+                                                      date__gt=(date_max - delta - datetime.timedelta(hours=1)),
+                                                      date__lt=(date_max + datetime.timedelta(hours=1)))
     except MeasureEntry.DoesNotExist:
         pass
 
@@ -702,9 +708,9 @@ def cron_job(request):
             userinfo = UserInfo.objects.get(user=sensor_node.user)
             for contact in UserContact.objects.filter(user_info=userinfo):
                 if contact.send_sms:
-                    thread = SmsThread(contact.phone_number, message)
-                    thread.start()
-                    thread_list.append(thread)
+                    t = SmsThread(contact.phone_number, message)
+                    t.start()
+                    thread_list.append(t)
                     logging.info(u'Sending SMS for dead sensor : ' + unicode(contact.phone_number)
                                  + u' : ' + unicode(sensor_node))
 
@@ -717,8 +723,8 @@ def cron_job(request):
         except UserInfo.DoesNotExist:
             logging.error(u'no user information for dead sensor : ' + sensor_node.user.username)
 
-    for thread in thread_list:
-        thread.join()
+    for t in thread_list:
+        t.join()
 
     return render_to_response('sensor_page/cronjobdone.html')
 
