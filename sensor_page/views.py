@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from django.contrib.auth import authenticate, login, logout
-
 from django.template import RequestContext, loader, Context
 from django.shortcuts import render_to_response, redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
-from django.utils.encoding import smart_bytes
 
 from sensor_page.models import *
 from sensor_page.forms import *
@@ -20,7 +18,7 @@ import StringIO
 from munjanara_sms import send_sms, send_bulk_sms
 
 import logging
-import thread
+import threading
 
 
 os.environ["MATPLOTLIBDATA"] = os.getcwdu()
@@ -37,6 +35,16 @@ subprocess.PIPE = None
 subprocess.STDOUT = None
 
 import matplotlib.pyplot as plt
+
+
+class SmsThread (threading.Thread):
+    def __init__(self, phone_number, msg):
+        threading.Thread.__init__(self)
+        self.phone_number = phone_number
+        self.sms_message = msg
+
+    def run(self):
+        send_sms(self.phone_number, self.sms_message)
 
 
 def send_sms_for_node(sensor_node, text):
@@ -681,7 +689,7 @@ def cron_job(request):
     now = datetime.datetime.now()
     now = now.replace(tzinfo=pytz.utc)
 
-    sms_tuples = []
+    thread_list = []
 
     sensor_nodes = SensorNode.objects.filter(warning_count__lt=3, warning_start__lt=now)
 
@@ -694,7 +702,9 @@ def cron_job(request):
             userinfo = UserInfo.objects.get(user=sensor_node.user)
             for contact in UserContact.objects.filter(user_info=userinfo):
                 if contact.send_sms:
-                    sms_tuples.append((contact.phone_number, message))
+                    thread = SmsThread(contact.phone_number, message)
+                    thread.start()
+                    thread_list.append(thread)
                     logging.info(u'Sending SMS for dead sensor : ' + unicode(contact.phone_number)
                                  + u' : ' + unicode(sensor_node))
 
@@ -707,8 +717,8 @@ def cron_job(request):
         except UserInfo.DoesNotExist:
             logging.error(u'no user information for dead sensor : ' + sensor_node.user.username)
 
-    if sms_tuples:
-        thread.start_new_thread(send_bulk_sms, (sms_tuples,))
+    for thread in thread_list:
+        thread.join()
 
     return render_to_response('sensor_page/cronjobdone.html')
 

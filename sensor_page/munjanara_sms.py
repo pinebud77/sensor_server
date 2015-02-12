@@ -15,6 +15,7 @@ def normalize_phone_number(string):
 
 
 def send_sms(receiver, message):
+    logging.info(u'sent sms : ' + receiver + u':' + message)
     url = 'http://www.munjanara.co.kr/MSG/send/web_admin_send.htm'
     receiver = normalize_phone_number(receiver)
     values = {
