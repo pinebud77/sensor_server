@@ -531,7 +531,7 @@ def dynamic_png(sensor, display_fmt, time_offset):
         date_max -= datetime.timedelta(days=time_offset*365)
 
     try:
-        measure_entries = MeasureEntry.objects.filter(sensor=sensor,
+        measure_entries = MeasureEntry.objects.defer('sensor').filter(sensor=sensor,
                                                       date__gt=(date_max - delta - datetime.timedelta(days=1)),
                                                       date__lt=(date_max + datetime.timedelta(days=1)))
     except MeasureEntry.DoesNotExist:
