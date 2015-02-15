@@ -1,4 +1,4 @@
 cron:
 - description: sensor death check
   url: /sensor/cronjob/
-  schedule: every 20mins
+  schedule: every 5mins
