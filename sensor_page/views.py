@@ -429,14 +429,15 @@ def input_page(request):
             return HttpResponse(t.render(c), content_type='text/plain')
 
         secure_key = request.POST.get('secure_key')
-        if secure_key != get_hash_from_mac(request.POST['mac_address']):
+        mac_address = request.POST.get('mac_address');
+        if secure_key != get_hash_from_mac(mac_address):
             logging.error("mismatching credential")
             t = loader.get_template('sensor_page/error.txt')
             c = Context({})
             return HttpResponse(t.render(c), content_type='text/plain')
 
         try:
-            sensor_node = SensorNode.objects.get(mac_address=request.POST['mac_address'])
+            sensor_node = SensorNode.objects.get(mac_address=mac_address)
         except SensorNode.DoesNotExist:
             logging.error(u'No Sensor Node for MAC ' + unicode(mac_address))
             t = loader.get_template('sensor_page/error.txt')
@@ -566,7 +567,7 @@ def dynamic_png(sensor, display_fmt, time_offset):
     date_max = date_max.replace(tzinfo=None)
     date_min = date_min.replace(tzinfo=None)
 
-    warning_delta = datetime.timedelta(seconds=sensor.sensor_node.warning_period + 60)
+    warning_delta = datetime.timedelta(seconds=sensor.sensor_node.warning_period*2)
 
     date_max += tz.utcoffset(date_max)
     date_min += tz.utcoffset(date_min)
