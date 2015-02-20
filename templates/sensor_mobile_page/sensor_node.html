@@ -1,0 +1,100 @@
+{% extends "base_mobile.html" %}
+
+{% block title %}센서노드 정보 : {{ sensor_node.user.username }} - {{ sensor_node.name }}{% endblock %}
+
+{% block login_form %}
+    {% if user.is_authenticated %}
+        <div class="container">
+        <div class="about">
+        <div class="about-top">
+        <h3>User</h3>
+        <div class="top-about">
+{{ username }} <a href="/sensor/logout/" class="more">로그아웃</a>
+        </div>
+        </div>
+        </div>
+        </div>
+    {% else %}
+        {{ block.super }}
+    {% endif %}
+{% endblock %}
+
+{% block post_title %}{% endblock %}
+
+{% block post_entry %}{% endblock %}
+
+{% block addition %}
+<div class="container">
+    <div class="about">
+        <div class="about-top">
+<h3>센서노드 : {{ sensor_node.user.username }} - {{ sensor_node.name }}</h3>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="about">
+        <div class="about-top">
+<h3>{{ sensor_node.name }}</h3>
+        <div class="top-about">
+MAC : {{ sensor_node.mac_address }}<br/>
+보고주기 : {{ sensor_node.reporting_period }}분<br/>
+정지시 알람 : {{ sensor_node.warning_period }}분<br/>
+<br/>
+{% for sensor in sensors %}
+    {% if sensor.sensor_node == sensor_node %}
+        형식 :
+        {% if sensor.type == 0 %}
+            온도
+        {% endif %}
+        {% if sensor.type == 1 %}
+            습도
+        {% endif %}
+        <br/>
+        제한(
+        {% if sensor.low_threshold != None %}
+        {{ sensor.low_threshold }}
+        {% else %}
+        없음
+        {% endif %}
+        ~
+        {% if sensor.high_threshold != None %}
+        {{ sensor.high_threshold }}
+        {% else %}
+        없음
+        {% endif %}
+        )
+        <br/>
+
+        {% if sensor.pic %}
+            {{ sensor.pic|safe }}
+{% if display_fmt != 'hour' %}
+<a href="/sensor/sensornode/{{ sensor_node.id }}/hour/" class="more">시간</a>
+{% endif %}
+{% if display_fmt != 'day' %}
+<a href="/sensor/sensornode/{{ sensor_node.id }}/day/" class="more">일</a>
+{% endif %}
+{% if display_fmt != 'week' %}
+<a href="/sensor/sensornode/{{ sensor_node.id }}/week/" class="more">주</a>
+{% endif %}
+{% if display_fmt != 'month' %}
+<a href="/sensor/sensornode/{{ sensor_node.id }}/month/" class="more">월</a>
+{% endif %}
+{% if display_fmt != 'year' %}
+<a href="/sensor/sensornode/{{ sensor_node.id }}/year/" class="more">년</a>
+{% endif %}
+<a href="/sensor/sensornode/{{ sensor_node.id }}/{{ display_fmt }}/{{ time_offset_prev }}/" class="more">&lt</a>
+{% if time_offset_next != -1 %}
+ - <a href="/sensor/sensornode/{{ sensor_node.id }}/{{ display_fmt }}/{{ time_offset_next }}/" class="more">&gt</a>
+{% endif %}
+        {% else %}
+            범위안에 센서 데이터가 없습니다.
+        {% endif %}
+    {% endif %}
+<br/><br/>
+{% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

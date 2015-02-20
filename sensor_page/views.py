@@ -25,6 +25,36 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 
 
+# list of mobile User Agents
+mobile_uas = [
+    'w3c ','acs-','alav','alca','amoi','audi','avan','benq','bird','blac',
+    'blaz','brew','cell','cldc','cmd-','dang','doco','eric','hipt','inno',
+    'ipaq','java','jigs','kddi','keji','leno','lg-c','lg-d','lg-g','lge-',
+    'maui','maxo','midp','mits','mmef','mobi','mot-','moto','mwbp','nec-',
+    'newt','noki','oper','palm','pana','pant','phil','play','port','prox',
+    'qwap','sage','sams','sany','sch-','sec-','send','seri','sgh-','shar',
+    'sie-','siem','smal','smar','sony','sph-','symb','t-mo','teli','tim-',
+    'tosh','tsm-','upg1','upsi','vk-v','voda','wap-','wapa','wapi','wapp',
+    'wapr','webc','winw','winw','xda','xda-'
+]
+
+mobile_ua_hints = [ 'SymbianOS', 'Opera Mini', 'iPhone' ]
+
+
+def mobile_browser(request):
+    mobile = False
+    ua = request.META['HTTP_USER_AGENT'].lower()[0:4]
+
+    if ua in mobile_uas:
+        mobile = True
+    else:
+        for hint in mobile_ua_hints:
+            if request.META['HTTP_USER_AGENT'].find(hint) > 0:
+                mobile = True
+
+    return mobile
+
+
 class SmsThread (threading.Thread):
     def __init__(self, phone_number, msg):
         threading.Thread.__init__(self)
@@ -67,9 +97,15 @@ def login_page(request):
 
         user = authenticate(username=username, password=password)
         if not user:
-            return render_to_response('sensor_page/nouser.html')
+            if not mobile_browser(request):
+                return render_to_response('sensor_page/nouser.html')
+            else:
+                return render_to_response('sensor_mobile_page/nouser.html')
         if not user.is_active:
-            return render_to_response('sensor_page/inact_user.html')
+            if not mobile_browser(request):
+                return render_to_response('sensor_page/inact_user.html')
+            else:
+                return render_to_response('sensor_mobilepage/inact_user.html')
         login(request, user)
         logging.info(u'user logged in : ' + unicode(user))
         return redirect('/sensor/userinfo/')
@@ -494,7 +530,7 @@ class UtcTzinfo(datetime.tzinfo):
         return 'UTC'
 
 
-def dynamic_png(sensor, display_fmt, time_offset):
+def dynamic_png(sensor, display_fmt, time_offset, is_mobile=False):
     #TODO: use localization for date format
     measure_entries = None
     date_max = datetime.datetime.utcnow()
@@ -595,9 +631,14 @@ def dynamic_png(sensor, display_fmt, time_offset):
     mpl.rcParams['savefig.edgecolor'] = 'white'
     mpl.rcParams['savefig.facecolor'] = 'white'
 
-    fig = Figure(figsize=[7, 4])
+    if not is_mobile:
+        fig = Figure(figsize=[7, 4])
+        ax = fig.add_axes([0.1, 0.2, 0.85, 0.75], axisbg='white')
+    else:
+        fig = Figure(figsize=[3.5, 3])
+        ax = fig.add_axes([0.15, 0.25, 0.85, 0.75], axisbg='white')
     fig.patch.set_alpha(1)
-    ax = fig.add_axes([0.1, 0.2, 0.85, 0.75], axisbg='white')
+
 
     ax.plot_date(dates, values, linestyle='solid', color='blue', marker=marker)
 
@@ -637,14 +678,16 @@ def sensor_node_page(request, sensor_node_id, display_fmt="day", time_offset=0):
         return render_to_response('sensor_page/no_sensor_node.html')
 
     if not request.user.is_staff and request.user != sensor_node.user:
-        return render_to_response('sensor_page/no_privilege.html')
+        if not mobile_browser(request):
+            return render_to_response('sensor_page/no_privilege.html')
+        else:
+            return render_to_response('sensor_mobile_page/no_privilege.html')
 
     for sensor in Sensor.objects.filter(sensor_node=sensor_node):
-        sensor.pic = dynamic_png(sensor, display_fmt, int(time_offset))
+        sensor.pic = dynamic_png(sensor, display_fmt, int(time_offset), is_mobile=mobile_browser(request))
         sensors.append(sensor)
     sensor_node.reporting_period /= 60
     sensor_node.warning_period /= 60
-
 
     context_dict = {
         'sensor_node': sensor_node,
@@ -654,7 +697,10 @@ def sensor_node_page(request, sensor_node_id, display_fmt="day", time_offset=0):
         'time_offset_next': int(time_offset) - 1,
     }
 
-    return render_to_response('sensor_page/sensor_node.html', context_dict, context)
+    if not mobile_browser(request):
+        return render_to_response('sensor_page/sensor_node.html', context_dict, context)
+    else:
+        return render_to_response('sensor_mobile_page/sensor_node.html', context_dict, context)
 
 
 def sensor_list(request):
@@ -701,7 +747,10 @@ def sensor_list(request):
         'phone_numbers': phone_numbers,
         'sensors': sensors,
     }
-    return render_to_response('sensor_page/sensor_list.html', context_dict, context)
+    if not mobile_browser(request):
+        return render_to_response('sensor_page/sensor_list.html', context_dict, context)
+    else:
+        return render_to_response('sensor_mobile_page/sensor_list.html', context_dict, context)
 
 
 def index_page(request):
@@ -711,14 +760,20 @@ def index_page(request):
         'user': request.user,
     }
 
-    return render_to_response('sensor_page/index_page.html', context_dict, context)
+    if not mobile_browser(request):
+        return render_to_response('sensor_page/index_page.html', context_dict, context)
+    else:
+        return render_to_response('sensor_mobile_page/index_page.html', context_dict, context)
 
 
 def admin_page(request):
     context = RequestContext(request)
 
     if not request.user.is_staff:
-        return render_to_response('sensor_page/no_privilege.html')
+        if not mobile_browser(request):
+            return render_to_response('sensor_page/no_privilege.html')
+        else:
+            return render_to_response('sensor_mobile_page/no_privilege.html')
 
     sensor_nodes = SensorNode.objects.all()
 

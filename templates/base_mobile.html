@@ -1,0 +1,142 @@
+<!--A Design by W3layouts 
+Author: W3layout
+Author URL: http://w3layouts.com
+License: Creative Commons Attribution 3.0 Unported
+License URL: http://creativecommons.org/licenses/by/3.0/
+-->
+<!DOCTYPE html>
+<html>
+<head>
+<title>{% block title %}Sensor Test Page{% endblock %}</title>
+<link href="/static/css/bootstrap.css" rel="stylesheet" type="text/css" media="all" />
+<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+<script src="/static/js/jquery.min.js"></script>
+<!-- Custom Theme files -->
+<!--theme-style-->
+<link href="/static/css/style.css" rel="stylesheet" type="text/css" media="all" />
+<!--//theme-style-->
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="keywords" content="Kitchen-Master Responsive web template, Bootstrap Web Templates, Flat Web Templates, Andriod Compatible web template, 
+Smartphone Compatible web template, free webdesigns for Nokia, Samsung, LG, SonyErricsson, Motorola web design" />
+<script type="application/x-javascript"> addEventListener("load", function() { setTimeout(hideURLbar, 0); }, false); function hideURLbar(){ window.scrollTo(0,1); } </script>
+<!--fonts-->
+<link href='http://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700,800' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Oswald:400,300,700' rel='stylesheet' type='text/css'>
+<!--//fonts-->
+<script type="text/javascript" src="/static/js/move-top.js"></script>
+<script type="text/javascript" src="/static/js/easing.js"></script>
+				<script type="text/javascript">
+					jQuery(document).ready(function($) {
+						$(".scroll").click(function(event){		
+							event.preventDefault();
+							$('html,body').animate({scrollTop:$(this.hash).offset().top},1000);
+						});
+					});
+					</script>
+
+</head>
+<body>
+	<!--header-->
+	<div class="header-in">
+		<div class="container">	
+				<!---->
+			<div class="header-logo">
+                <div class="logo">
+				<a href="/"><h1 style="color:white">SensorTest</h1></a>
+				</div>
+				<div class="top-nav">
+					<span class="menu"> </span>
+					<ul>
+						<li ><a href="/" data-hover="ABOUT">ABOUT  </a> </li>
+						<li><a href="/sensor/userinfo/" data-hover="CLASSES">SENSORS </a></li>
+						<li ><a href="/sensor/contacts/" data-hover="CONTACT">CONTACT </a></li>
+					</ul>
+					<!--script-->
+				<script>
+					$("span.menu").click(function(){
+						$(".top-nav ul").slideToggle(500, function(){
+						});
+					});
+			</script>				
+		</div>
+		<div class="clearfix"> </div>
+			</div>
+			<!---->
+				<div class="top-menu">					
+					<ul>
+						<li ><a href="/" data-hover="ABOUT">ABOUT  </a> </li>
+						<li><a href="/sensor/userinfo/" data-hover="CLASSES" > SENSORS</a></li>
+						<li><a href="contact.html">CONTACT </a></li>
+					</ul>
+					<!--script-->
+							
+		</div>
+	</div>
+</div>
+		<!---->
+{% block login_form %}
+<div class="container">
+    <div class="contact">
+        <div class="contact-in">
+            <h2>Login</h2>
+            <div class="contact-left">
+                <form id="loginform" method="post" action="/sensor/login/">
+                    {% csrf_token %}
+                    <div>
+                        <span>username</span>
+                        <input name="username" type="text" class="textbox">
+                    </div>
+                    <div>
+                        <span>password</span>
+                        <input name="password" type="password" class="textbox">
+                    </div>
+                    <div>
+                        <input type="submit" value="Submit">
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block addition %}{% endblock %}
+
+<div class="container">
+    <div class="about">
+        <div class="about-top">
+<h3>{% block post_title %}About This Page{% endblock %}</h3>
+            <div class="top-about">
+                {% block post_entry %}이 페이지는 센서 노드에 대한 테스트 페이지입니다.{% endblock %}
+            </div>
+        </div>
+    </div>
+</div>
+
+
+	<!---->	
+	<div class="footer">
+		<div class="container">
+                <p class="footer-class">Modified by <a href="mailto:pinebud77@hotmail.com">pinebud</a><br/>Copyright &copy; 2015 Kitchen-Master Template by  <a href="http://w3layouts.com/" target="_blank">W3layouts</a></p>
+		</div>
+		 <script type="text/javascript">
+						$(document).ready(function() {
+							/*
+							var defaults = {
+					  			containerID: 'toTop', // fading element id
+								containerHoverID: 'toTopHover', // fading element hover id
+								scrollSpeed: 1200,
+								easingType: 'linear' 
+					 		};
+							*/
+							
+							$().UItoTop({ easingType: 'easeOutQuart' });
+							
+						});
+					</script>
+				<a href="#" id="toTop" style="display: block;"> <span id="toTopHover" style="opacity: 1;"> </span></a>
+	</div>
+
+</body>
+</html>
