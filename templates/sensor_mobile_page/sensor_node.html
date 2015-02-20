@@ -9,7 +9,7 @@
         <div class="about-top">
         <h3>User</h3>
         <div class="top-about">
-{{ username }} <a href="/sensor/logout/" class="more">로그아웃</a>
+{{ user.username }} <a href="/sensor/logout/" class="more">로그아웃</a>
         </div>
         </div>
         </div>
@@ -29,32 +29,35 @@ MAC : {{ sensor_node.mac_address }}<br/>
 정지시 알람 : {{ sensor_node.warning_period }}분<br/>
 <br/>
 {% for sensor in sensors %}
-    {% if sensor.sensor_node == sensor_node %}
-        형식 :
-        {% if sensor.type == 0 %}
-            온도
-        {% endif %}
-        {% if sensor.type == 1 %}
-            습도
-        {% endif %}
-        <br/>
-        제한(
-        {% if sensor.low_threshold != None %}
-        {{ sensor.low_threshold }}
-        {% else %}
-        없음
-        {% endif %}
-        ~
-        {% if sensor.high_threshold != None %}
-        {{ sensor.high_threshold }}
-        {% else %}
-        없음
-        {% endif %}
-        )
-        <br/>
+    형식 :
+    {% if sensor.type == 0 %}
+        온도
+    {% endif %}
+    {% if sensor.type == 1 %}
+        습도
+    {% endif %}
+    <br/>
+    제한(
+    {% if sensor.low_threshold != None %}
+    {{ sensor.low_threshold }}
+    {% else %}
+    없음
+    {% endif %}
+    ~
+    {% if sensor.high_threshold != None %}
+    {{ sensor.high_threshold }}
+    {% else %}
+    없음
+    {% endif %}
+    )
+    <br/>
 
-        {% if sensor.pic %}
-            {{ sensor.pic|safe }}
+    {% if sensor.pic %}
+        {{ sensor.pic|safe }}
+    {% else %}
+        범위안에 센서 데이터가 없습니다.
+    {% endif %}
+<br/>
 {% if display_fmt != 'hour' %}
 <a href="/sensor/sensornode/{{ sensor_node.id }}/hour/" class="more">시간</a>
 {% endif %}
@@ -74,10 +77,7 @@ MAC : {{ sensor_node.mac_address }}<br/>
 {% if time_offset_next != -1 %}
 <a href="/sensor/sensornode/{{ sensor_node.id }}/{{ display_fmt }}/{{ time_offset_next }}/" class="more">&gt</a>
 {% endif %}
-        {% else %}
-            범위안에 센서 데이터가 없습니다.
-        {% endif %}
-    {% endif %}
+
 <br/><br/>
 {% endfor %}
 
