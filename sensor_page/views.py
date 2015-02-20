@@ -625,7 +625,7 @@ def dynamic_png(sensor, display_fmt, time_offset):
 
 def sensor_node_page(request, sensor_node_id, display_fmt="day", time_offset=0):
     if not request.user.is_authenticated():
-        return redirect('/sensor/login/')
+        return redirect('/')
 
     context = RequestContext(request)
 
@@ -643,13 +643,14 @@ def sensor_node_page(request, sensor_node_id, display_fmt="day", time_offset=0):
         return render_to_response('sensor_page/no_privilege.html')
 
     for sensor in Sensor.objects.filter(sensor_node=sensor_node):
-        sensor.sensor_node.reporting_period /= 60
-        sensor.sensor_node.warning_period /= 60
         sensor.pic = dynamic_png(sensor, display_fmt, int(time_offset))
         sensors.append(sensor)
+    sensor_node.reporting_period /= 60
+    sensor_node.warning_period /= 60
+
 
     context_dict = {
-        'sensor_node' : sensor_node,
+        'sensor_node': sensor_node,
         'sensors': sensors,
         'display_fmt': display_fmt,
         'time_offset_prev': int(time_offset) + 1,
@@ -661,7 +662,7 @@ def sensor_node_page(request, sensor_node_id, display_fmt="day", time_offset=0):
 
 def sensor_list(request):
     if not request.user.is_authenticated():
-        return redirect('/sensor/login/')
+        return redirect('/')
 
     context = RequestContext(request)
 

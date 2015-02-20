@@ -13,8 +13,6 @@
 {% block post_title %}센서노드 : {{ sensor_node.user.username }} - {{ sensor_node.name }}{% endblock %}
 
 {% block post_entry %}
-<a href="/sensor/userinfo/{{ sensor_node.id }}/">사용자 정보</a> <a href="/sensor/logout/">로그아웃</a><br/><br/>
-
 그래프 :
 {% if display_fmt != 'hour' %}
 <a href="/sensor/sensornode/{{ sensor_node.id }}/hour/">1시간</a>
