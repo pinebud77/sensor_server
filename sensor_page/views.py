@@ -631,16 +631,11 @@ def dynamic_png(sensor, display_fmt, time_offset, is_mobile=False):
     mpl.rcParams['savefig.edgecolor'] = 'white'
     mpl.rcParams['savefig.facecolor'] = 'white'
 
-    if not is_mobile:
-        fig = Figure(figsize=[7, 4])
-        ax = fig.add_axes([0.1, 0.2, 0.85, 0.75], axisbg='white')
-    else:
-        fig = Figure(figsize=[3.5, 3])
-        ax = fig.add_axes([0.15, 0.25, 0.85, 0.73], axisbg='white')
-        font = {'size': 7}
-        mpl.rc('font', **font)
+    fig = Figure(figsize=[7, 4])
+    ax = fig.add_axes([0.1, 0.2, 0.85, 0.75], axisbg='white')
+    font = {'size': 11}
+    mpl.rc('font', **font)
     fig.patch.set_alpha(1)
-
 
     ax.plot_date(dates, values, linestyle='solid', color='blue', marker=marker)
 
@@ -660,7 +655,14 @@ def dynamic_png(sensor, display_fmt, time_offset, is_mobile=False):
     buf = cStringIO.StringIO()
     canvas.print_png(buf)
 
-    return """<img src="data:image/png;base64,%s"/>""" % buf.getvalue().encode("base64").strip()
+    if is_mobile:
+        height = 160
+        width = 280
+    else:
+        height = 320
+        width = 560
+
+    return """<img height=%d width=%d src="data:image/png;base64,%s"/>""" % (height, width, buf.getvalue().encode("base64").strip())
 
 
 def sensor_node_page(request, sensor_node_id, display_fmt="day", time_offset=0):
