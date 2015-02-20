@@ -636,7 +636,9 @@ def dynamic_png(sensor, display_fmt, time_offset, is_mobile=False):
         ax = fig.add_axes([0.1, 0.2, 0.85, 0.75], axisbg='white')
     else:
         fig = Figure(figsize=[3.5, 3])
-        ax = fig.add_axes([0.15, 0.25, 0.85, 0.75], axisbg='white')
+        ax = fig.add_axes([0.15, 0.25, 0.85, 0.73], axisbg='white')
+        font = {'size': 7}
+        mpl.rc('font', **font)
     fig.patch.set_alpha(1)
 
 

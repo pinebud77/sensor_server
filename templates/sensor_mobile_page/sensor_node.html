@@ -19,24 +19,11 @@
     {% endif %}
 {% endblock %}
 
-{% block post_title %}{% endblock %}
+{% block addition %}{% endblock %}
 
-{% block post_entry %}{% endblock %}
+{% block post_title %}센서노드 : {{ sensor_node.user.username }} - {{ sensor_node.name }}{% endblock %}
 
-{% block addition %}
-<div class="container">
-    <div class="about">
-        <div class="about-top">
-<h3>센서노드 : {{ sensor_node.user.username }} - {{ sensor_node.name }}</h3>
-        </div>
-    </div>
-</div>
-
-<div class="container">
-    <div class="about">
-        <div class="about-top">
-<h3>{{ sensor_node.name }}</h3>
-        <div class="top-about">
+{% block post_entry %}
 MAC : {{ sensor_node.mac_address }}<br/>
 보고주기 : {{ sensor_node.reporting_period }}분<br/>
 정지시 알람 : {{ sensor_node.warning_period }}분<br/>
@@ -85,7 +72,7 @@ MAC : {{ sensor_node.mac_address }}<br/>
 {% endif %}
 <a href="/sensor/sensornode/{{ sensor_node.id }}/{{ display_fmt }}/{{ time_offset_prev }}/" class="more">&lt</a>
 {% if time_offset_next != -1 %}
- - <a href="/sensor/sensornode/{{ sensor_node.id }}/{{ display_fmt }}/{{ time_offset_next }}/" class="more">&gt</a>
+<a href="/sensor/sensornode/{{ sensor_node.id }}/{{ display_fmt }}/{{ time_offset_next }}/" class="more">&gt</a>
 {% endif %}
         {% else %}
             범위안에 센서 데이터가 없습니다.
@@ -93,8 +80,5 @@ MAC : {{ sensor_node.mac_address }}<br/>
     {% endif %}
 <br/><br/>
 {% endfor %}
-            </div>
-        </div>
-    </div>
-</div>
+
 {% endblock %}

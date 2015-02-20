@@ -47,35 +47,35 @@
         <div class="about-top">
         <h3>Sensor Info</h3>
         <div class="top-about">
-<table style="text-align: left; width: 600px; height: 60px;"
+<table style="text-align: left; width: 600px; height: 80px;"
  border="1" cellpadding="2" cellspacing="2">
   <tbody>
     <tr>
-      <td style="width: 162px; text-align: center;">Node
+      <td style="width: 162px; height:40px; text-align: center;">Node
 Name</td>
-      <td style="width: 53px; text-align: center;">Rpt</td>
-      <td style="width: 65px; text-align: center;">형식</td>
-      <td style="width: 47px; text-align: center;">값</td>
-      <td style="width: 107px; text-align: center;">범위</td>
-      <td style="width: 55px; text-align: center;">동작</td>
+      <td style="width: 53px; height:40px; text-align: center;">Rpt</td>
+      <td style="width: 65px; height:40px; text-align: center;">형식</td>
+      <td style="width: 47px; height:40px; text-align: center;">값</td>
+      <td style="width: 107px; height:40px; text-align: center;">범위</td>
+      <td style="width: 55px; height:40px; text-align: center;">동작</td>
     </tr>
     {% for sensor in sensors %}
 
-    <tr>
-      <td style="width: 162px; text-align: center;">
-          <a href=/sensor/sensornode/{{ sensor.sensor_node.id }}/>{{ sensor.sensor_node.name }}</a></td>
-      <td style="width: 53px; text-align: center;">{{ sensor.sensor_node.reporting_period }}</td>
-      <td style="width: 65px; text-align: center;">
+    <tr class='clickable-row' data-href='/sensor/sensornode/{{ sensor.sensor_node.id }}/'>
+      <td style="width: 162px; height:40px; text-align: center;">
+          <a href="/sensor/sensornode/{{ sensor.sensor_node.id }}/">{{ sensor.sensor_node.name }}</a></td>
+      <td style="width: 53px; height:40px; text-align: center;">{{ sensor.sensor_node.reporting_period }}</td>
+      <td style="width: 65px; height:40px; text-align: center;">
           {% if sensor.type == 0 %}온도{% endif %}
           {% if sensor.type == 1 %}습도{% endif %}
       </td>
-      <td style="width: 47px; text-align: center;">{% if not sensor.inactive %}{{ sensor.last_value }}{% else %}없음{% endif %}</td>
-      <td style="width: 107px; text-align: center;">
+      <td style="width: 47px; height:40px; text-align: center;">{% if not sensor.inactive %}{{ sensor.last_value }}{% else %}없음{% endif %}</td>
+      <td style="width: 107px; height:40px; text-align: center;">
           {% if sensor.low_threshold != None %}{{ sensor.low_threshold|floatformat:"0" }}{% else %}X{% endif %}
                 ~
                 {% if sensor.high_threshold != None %}{{ sensor.high_threshold|floatformat:"0" }}{% else %}X{% endif %}
       </td>
-      <td style="width: 55px; text-align: center;">{% if not sensor.inactive %}O{% else %}X{% endif %}</td>
+      <td style="width: 55px; height:40px; text-align: center;">{% if not sensor.inactive %}O{% else %}X{% endif %}</td>
     </tr>
 
     {% endfor %}
@@ -85,4 +85,11 @@ Name</td>
         </div>
     </div>
 </div>
+{% endblock %}
+{% block js_footer %}
+jQuery(document).ready(function($) {
+    $(".clickable-row").click(function() {
+        window.document.location = $(this).data("href");
+    });
+});
 {% endblock %}
