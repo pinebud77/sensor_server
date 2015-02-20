@@ -536,7 +536,8 @@ def dynamic_png(sensor, display_fmt, time_offset):
     try:
         measure_entries = MeasureEntry.objects.defer('sensor').filter(sensor=sensor,
                                                       date__gt=(date_max - delta - datetime.timedelta(hours=1)),
-                                                      date__lt=(date_max + datetime.timedelta(hours=1)))
+                                                      date__lt=(date_max + datetime.timedelta(hours=1))
+                                                        ).order_by('-date')
     except MeasureEntry.DoesNotExist:
         pass
 
@@ -630,7 +631,7 @@ def dynamic_png(sensor, display_fmt, time_offset):
     return """<img src="data:image/png;base64,%s"/>""" % buf.getvalue().encode("base64").strip()
 
 
-def user_info(request, display_fmt="day", time_offset=0):
+def sensor_node_page(request, sensor_node_id, display_fmt="day", time_offset=0):
     if not request.user.is_authenticated():
         return redirect('/sensor/login/')
 
@@ -639,50 +640,95 @@ def user_info(request, display_fmt="day", time_offset=0):
     if time_offset < 0:
         time_offset = 0
 
-    phone_numbers = []
-    sensor_nodes = []
     sensors = []
 
     try:
-        userinfo = UserInfo.objects.get(user=request.user)
-
-        user_contacts = []
-        try:
-            user_contacts += UserContact.objects.filter(user_info=userinfo)
-        except UserContact.DoesNotExist:
-            pass
-        for contact in user_contacts:
-            phone_numbers.append(contact.phone_number)
-    except UserInfo.DoesNotExist:
-        pass
-
-    try:
-        sensor_nodes = SensorNode.objects.filter(user=request.user)
+        sensor_node = SensorNode.objects.get(id=int(sensor_node_id))
     except SensorNode.DoesNotExist:
-        pass
+        return render_to_response('sensor_page/no_sensor_node.html')
 
-    for sensor_node in sensor_nodes:
-        sensor_node.reporting_period /= 60
-        sensor_node.warning_period /= 60
-        try:
-            sensors += Sensor.objects.filter(sensor_node=sensor_node)
-        except Sensor.DoesNotExist:
-            pass
+    if not request.user.is_staff and request.user != sensor_node.user:
+        return render_to_response('sensor_page/no_privilege.html')
 
-    for sensor in sensors:
+    for sensor in Sensor.objects.filter(sensor_node=sensor_node):
+        sensor.sensor_node.reporting_period /= 60
+        sensor.sensor_node.warning_period /= 60
         sensor.pic = dynamic_png(sensor, display_fmt, int(time_offset))
+        sensors.append(sensor)
 
     context_dict = {
-        'username': request.user.username,
-        'phone_numbers': phone_numbers,
-        'sensor_nodes': sensor_nodes,
+        'sensor_node' : sensor_node,
         'sensors': sensors,
         'display_fmt': display_fmt,
         'time_offset_prev': int(time_offset) + 1,
         'time_offset_next': int(time_offset) - 1,
     }
 
-    return render_to_response('sensor_page/userinfo.html', context_dict, context)
+    return render_to_response('sensor_page/sensor_node_list.html', context_dict, context)
+
+
+def sensor_list(request):
+    if not request.user.is_authenticated():
+        return redirect('/sensor/login/')
+
+    context = RequestContext(request)
+
+    phone_numbers = []
+    sensors = []
+
+    cur_time = datetime.datetime.utcnow()
+    cur_time = cur_time.replace(tzinfo=pytz.utc)
+
+    try:
+        userinfo = UserInfo.objects.get(user=request.user)
+
+        user_contacts = []
+        user_contacts += UserContact.objects.filter(user_info=userinfo)
+        for contact in user_contacts:
+            phone_numbers.append(contact.phone_number)
+    except UserInfo.DoesNotExist:
+        pass
+
+    for sensor_node in SensorNode.objects.filter(user=request.user):
+        for sensor in Sensor.objects.filter(sensor_node=sensor_node):
+            sensor.sensor_node.reporting_period /= 60
+            try:
+                last_measure = MeasureEntry.objects.order_by('-date')[0]
+                sensor.last_value = last_measure.value
+            except MeasureEntry.DoesNotExist:
+                sensor.last_value = None
+
+            if cur_time > sensor.sensor_node.warning_start:
+                sensor.inactive = True
+            else:
+                sensor.inactive = False
+
+            sensors.append(sensor)
+
+    context_dict = {
+        'username': request.user.username,
+        'phone_numbers': phone_numbers,
+        'sensors': sensors,
+    }
+    return render_to_response('sensor_page/sensor_list.html', context_dict, context)
+
+
+def admin_page(request):
+    context = RequestContext(request)
+
+    if not request.user.is_staff:
+        return render_to_response('sensor_page/no_privilege.html')
+
+    sensor_nodes = SensorNode.objects.all()
+
+    for sensor_node in sensor_nodes:
+        sensor_node.reporting_period /= 60
+        sensor_node.warning_period /= 60
+
+    context_dict = {
+        'sensor_nodes': sensor_nodes
+    }
+    return render_to_response('sensor_page/admin_page.html', context_dict, context)
 
 
 def cron_job(request):

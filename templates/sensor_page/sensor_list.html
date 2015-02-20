@@ -1,0 +1,55 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="content-type">
+  <title>Sensor List for the User : {{ username }}</title>
+</head>
+<body>
+<h1>사용자 : {{ username }}</h1>
+<a href="/sensor/logout/">로그아웃</a><br/><br/>
+<strong>전화번호 정보</strong>
+{% if phone_numbers %}
+    {% for number in phone_numbers %}
+    <li>{{ number }}</li>
+    {% endfor %}
+{% else %}
+    <strong>전화번호가 등록되지 않았습니다.</strong>
+{% endif %}
+<br/>
+<table style="text-align: left; width: 600px; height: 60px;"
+ border="1" cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td style="width: 162px; text-align: center;">Node
+Name</td>
+      <td style="width: 53px; text-align: center;">Rpt</td>
+      <td style="width: 51px; text-align: center;">리셋</td>
+      <td style="width: 65px; text-align: center;">형식</td>
+      <td style="width: 47px; text-align: center;">값</td>
+      <td style="width: 107px; text-align: center;">하한~상한</td>
+      <td style="width: 55px; text-align: center;">동작</td>
+    </tr>
+    {% for sensor in sensors %}
+    <tr>
+      <td style="width: 162px; text-align: center;"><a href=/sensor/sensornode/{{ sensor.sensor_node.id }}>
+          {{ sensor.sensor_node.name }}</a></td>
+      <td style="width: 53px; text-align: center;">{{ sensor.sensor_node.reporting_period }}</td>
+      <td style="width: 51px; text-align: center;">{{ sensor.sensor_node.first_report_count }}</td>
+      <td style="width: 65px; text-align: center;">
+          {% if sensor.type == 0 %}온도{% endif %}
+          {% if sensor.type == 1 %}습도{% endif %}
+      </td>
+      <td style="width: 47px; text-align: center;">{% if sensor.last_value != None %}{{ sensor.last_value }}{% else %}없음{% endif %}</td>
+      <td style="width: 107px; text-align: center;">
+          {% if sensor.low_threshold != None %}{{ sensor.low_threshold }}{% else %}없음{% endif %}
+                ~
+                {% if sensor.high_threshold != None %}{{ sensor.high_threshold }}{% else %}없음{% endif %}
+      </td>
+      <td style="width: 55px; text-align: center;">{% if not sensor.inactive %}O{% else %}X{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</body>
+</html>

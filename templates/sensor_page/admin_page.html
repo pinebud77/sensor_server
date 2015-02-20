@@ -1,0 +1,36 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="content-type">
+  <title>Sensor Node List</title>
+</head>
+<body>
+<h1>Sensor Node List</h1>
+<table style="text-align: center; width: 600px; height: 120px;"
+ border="1" cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td>Username</td>
+      <td>Node Name</td>
+      <td>Mac Address</td>
+      <td>Rpt</td>
+      <td>Warn</td>
+      <td>Last IP</td>
+      <td>RST</td>
+    </tr>
+    {% for sensor_node in sensor_nodes %}
+    <tr>
+      <td>{{ sensor_node.user.username }}</td>
+      <td><a href="/sensor/sensornode/{{ sensor_node.id }}">{{ sensor_node.name }}</a></td>
+      <td>{{ sensor_node.mac_address }}</td>
+      <td>{{ sensor_node.reporting_period }}분</td>
+      <td>{{ sensor_node.warning_period }}분</td>
+      <td>{{ sensor_node.last_ip }}</td>
+      <td>{{ sensor_node.first_report_count }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</body>
+</html>
