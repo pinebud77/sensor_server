@@ -693,7 +693,7 @@ def sensor_list(request):
         for sensor in Sensor.objects.filter(sensor_node=sensor_node):
             sensor.sensor_node.reporting_period /= 60
             try:
-                last_measure = MeasureEntry.objects.order_by('-date')[0]
+                last_measure = MeasureEntry.objects.filter(sensor=sensor).order_by('-date')[0]
                 sensor.last_value = last_measure.value
             except MeasureEntry.DoesNotExist:
                 sensor.last_value = None
