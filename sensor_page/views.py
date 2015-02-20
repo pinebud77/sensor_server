@@ -45,7 +45,6 @@ def send_sms_for_node(sensor_node, text):
                 t = SmsThread(contact.phone_number, text)
                 t.start()
                 threads.append(t)
-                logging.info(u'sent SMS : ' + contact.phone_number + u' : ' + text)
     except UserInfo.DoesNotExist:
         logging.error(u'User info was not specified : ' + sensor_node.user.username)
 
@@ -377,10 +376,8 @@ def handle_first_and_resume(measure, first):
     if first or resume:
         if first:
             text = u'센서가 첫 데이터를 보냈습니다. : '
-            logging.info(u'sent SMS for the first data : ' + sensor_node.user.username + ':' + sensor_node.name)
         else:
             text = u'센서가 다시 데이터를 보냈습니다. : '
-            logging.info(u'sent SMS for the resume report : ' + sensor_node.user.username + ':' + sensor_node.name)
         text += sensor_node.name + u' : '
         text += get_sensor_type_str(measure.sensor.type) + u' : '
         text += '%.1f' % measure.value
@@ -755,8 +752,6 @@ def cron_job(request):
                     t = SmsThread(contact.phone_number, message)
                     t.start()
                     thread_list.append(t)
-                    logging.info(u'Sending SMS for dead sensor : ' + unicode(contact.phone_number)
-                                 + u' : ' + unicode(sensor_node))
 
             sensor_node.warning_count += 1
             now_utc = now.replace(tzinfo=pytz.utc)
