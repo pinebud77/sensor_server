@@ -15,4 +15,6 @@ urlpatterns = patterns('',
                        url(r'^sensornode/(?P<sensor_node_id>\w+)/(?P<display_fmt>\w+)/', views.sensor_node_page),
                        url(r'^sensornode/(?P<sensor_node_id>\w+)/', views.sensor_node_page),
                        url(r'^input/', views.input_page),
+                       url(r'^/', views.index_page),
+                       url(r'', views.index_page),
                        )

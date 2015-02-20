@@ -1,6 +1,11 @@
-<html>
-<head>비활성화된 사용자</head>
-<body>
-<H1>비활성화된 사용자입니다.</H1>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block title %}비활성화된 사용자{% endblock %}
+
+{% block login_form %}
+{{ block.super }}
+{% endblock %}
+
+{% block post_title %} 사용자가 비활성화되었습니다. {% endblock %}
+
+{% block post_entry %} 관리자에게 문의하시기 바랍니다. {% endblock %}

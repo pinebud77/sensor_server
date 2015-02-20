@@ -1,10 +1,18 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>센서노드 정보 : {{ sensor_node.user.username }} - {{ sensor_node.name }}</title>
-</head>
-<body>
-<h1>센서노드 : {{ sensor_node.user.username }} - {{ sensor_node.name }}</h1>
+{% extends "base.html" %}
+
+{% block title %}센서노드 정보 : {{ sensor_node.user.username }} - {{ sensor_node.name }}{% endblock %}
+
+{% block login_form %}
+    {% if user.is_authenticated %}
+        사용자명 : {{ user.username }} (<a href="/sensor/logout/">로그아웃</a>)
+    {% else %}
+        {{ block.super }}
+    {% endif %}
+{% endblock %}
+
+{% block post_title %}센서노드 : {{ sensor_node.user.username }} - {{ sensor_node.name }}{% endblock %}
+
+{% block post_entry %}
 <a href="/sensor/userinfo/{{ sensor_node.id }}/">사용자 정보</a> <a href="/sensor/logout/">로그아웃</a><br/><br/>
 
 그래프 :
@@ -71,6 +79,4 @@ MAC : {{ sensor_node.mac_address }}<br/>
         <br/>
     {% endif %}
 {% endfor %}
-
-</body>
-</html>
+{% endblock %}

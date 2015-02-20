@@ -1,12 +1,19 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
-<head>
-  <meta content="text/html; charset=ISO-8859-1"
- http-equiv="content-type">
-  <title>Sensor List for the User : {{ username }}</title>
-</head>
-<body>
-<h1>사용자 : {{ username }}</h1>
+{% extends "base.html" %}
+
+{% block title %}Sensor List for the User : {{ username }}{% endblock %}
+
+{% block login_form %}
+    {% if user.is_authenticated %}
+        사용자명 : {{ user.username }} (<a href="/sensor/logout/">로그아웃</a>)
+    {% else %}
+        {{ block.super }}
+    {% endif %}
+{% endblock %}
+
+{% block post_title %} 사용자 : {{ username }} {% endblock %}
+
+{% block post_entry %}
+
 <a href="/sensor/logout/">로그아웃</a><br/><br/>
 <strong>전화번호 정보</strong>
 {% if phone_numbers %}
@@ -40,7 +47,7 @@ Name</td>
           {% if sensor.type == 0 %}온도{% endif %}
           {% if sensor.type == 1 %}습도{% endif %}
       </td>
-      <td style="width: 47px; text-align: center;">{% if sensor.last_value != None %}{{ sensor.last_value }}{% else %}없음{% endif %}</td>
+      <td style="width: 47px; text-align: center;">{% if not sensor.inactive %}{{ sensor.last_value }}{% else %}없음{% endif %}</td>
       <td style="width: 107px; text-align: center;">
           {% if sensor.low_threshold != None %}{{ sensor.low_threshold }}{% else %}없음{% endif %}
                 ~
@@ -51,5 +58,4 @@ Name</td>
     {% endfor %}
   </tbody>
 </table>
-</body>
-</html>
+{% endblock %}

@@ -77,7 +77,7 @@ def login_page(request):
 
     else:
         form = LoginForm()
-        return render_to_response('sensor_page/login.html', {'form': form}, context)
+        return render_to_response('/', {'form': form}, context)
 
 
 def check_fields_in_post(fields, post):
@@ -345,17 +345,9 @@ def app_login_page(request):
         return render_to_response('sensor_page/error.html', {}, context)
 
 
-def test_page(request):
-    logout(request)
-    user = authenticate(username='young', password='11111111')
-    login(request, user)
-
-    return redirect('/sensor/userinfo/')
-
-
 def logout_page(request):
     logout(request)
-    return redirect('/sensor/login/')
+    return redirect('/')
 
 
 def get_client_ip(request):
@@ -599,7 +591,7 @@ def dynamic_png(sensor, display_fmt, time_offset):
 
     mpl.rcParams['axes.edgecolor'] = 'black'
     mpl.rcParams['axes.facecolor'] = 'white'
-    mpl.rcParams['figure.facecolor'] = '0.75'
+    mpl.rcParams['figure.facecolor'] = 'white'
     mpl.rcParams['figure.edgecolor'] = 'white'
     mpl.rcParams['figure.autolayout'] = 'True'
     mpl.rcParams['axes.formatter.use_locale'] = 'True'
@@ -607,8 +599,8 @@ def dynamic_png(sensor, display_fmt, time_offset):
     mpl.rcParams['savefig.facecolor'] = 'white'
 
     fig = Figure(figsize=[7, 4])
-    fig.patch.set_alpha(0)
-    ax = fig.add_axes([0.1, 0.2, 0.85, 0.75])
+    fig.patch.set_alpha(1)
+    ax = fig.add_axes([0.1, 0.2, 0.85, 0.75], axisbg='white')
 
     ax.plot_date(dates, values, linestyle='solid', color='blue', marker=marker)
 
@@ -664,7 +656,7 @@ def sensor_node_page(request, sensor_node_id, display_fmt="day", time_offset=0):
         'time_offset_next': int(time_offset) - 1,
     }
 
-    return render_to_response('sensor_page/sensor_node_list.html', context_dict, context)
+    return render_to_response('sensor_page/sensor_node.html', context_dict, context)
 
 
 def sensor_list(request):
@@ -706,11 +698,22 @@ def sensor_list(request):
             sensors.append(sensor)
 
     context_dict = {
+        'user': request.user,
         'username': request.user.username,
         'phone_numbers': phone_numbers,
         'sensors': sensors,
     }
     return render_to_response('sensor_page/sensor_list.html', context_dict, context)
+
+
+def index_page(request):
+    context = RequestContext(request)
+
+    context_dict = {
+        'user': request.user,
+    }
+
+    return render_to_response('sensor_page/index_page.html', context_dict, context)
 
 
 def admin_page(request):

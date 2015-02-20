@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}초기화면{% endblock %}
+
+{% block login_form %}
+    {% if user.is_authenticated %}
+        사용자명 : {{ user.username }} (<a href="/sensor/logout/">로그아웃</a>)
+    {% else %}
+        {{ block.super }}
+    {% endif %}
+{% endblock %}
+
+{% block post_title %} {{ block.super }} {% endblock %}
+
+{% block post_entry %} {{ block.super }} {% endblock %}
