@@ -42,50 +42,63 @@
     </div>
 </div>
 
+{% for sensor_node in sensor_nodes %}
 <div class="container">
     <div class="about">
         <div class="about-top">
-        <h3>Sensor Info</h3>
+        <h3>{{ sensor_node.name }}
+        </h3>
+        <a href="/sensor/sensornode/{{ sensor_node.id }}/" class="more">그래프</a>
         <div class="top-about">
-<table style="text-align: left; width: 600px; height: 80px;"
- border="1" cellpadding="2" cellspacing="2">
+<table width="100%" border="1" cellpadding="2" cellspacing="2">
   <tbody>
     <tr>
-      <td style="width: 162px; height:40px; text-align: center;">Node
-Name</td>
-      <td style="width: 53px; height:40px; text-align: center;">Rpt</td>
-      <td style="width: 65px; height:40px; text-align: center;">형식</td>
-      <td style="width: 47px; height:40px; text-align: center;">값</td>
-      <td style="width: 107px; height:40px; text-align: center;">범위</td>
-      <td style="width: 55px; height:40px; text-align: center;">동작</td>
+        <td style="width: 100px; text-align:center;">MAC</td>
+        <td style="text-align: center;">{{ sensor_node.mac_address }}분</td>
     </tr>
-    {% for sensor in sensors %}
+    <tr>
+        <td style="width: 100px; text-align:center;">보고주기</td>
+        <td style="text-align: center;">{{ sensor_node.reporting_period }}분</td>
+    </tr>
+    <tr>
+        <td style="width: 100px; text-align:center;">정지알람</td>
+        <td style="text-align: center;">{{ sensor_node.warning_period }}분</td>
+    </tr>
 
-    <tr class='clickable-row' data-href='/sensor/sensornode/{{ sensor.sensor_node.id }}/'>
-      <td style="width: 162px; height:40px; text-align: center;">
-          <a href="/sensor/sensornode/{{ sensor.sensor_node.id }}/">{{ sensor.sensor_node.name }}</a></td>
-      <td style="width: 53px; height:40px; text-align: center;">{{ sensor.sensor_node.reporting_period }}</td>
-      <td style="width: 65px; height:40px; text-align: center;">
-          {% if sensor.type == 0 %}온도{% endif %}
-          {% if sensor.type == 1 %}습도{% endif %}
-      </td>
-      <td style="width: 47px; height:40px; text-align: center;">{% if not sensor.inactive %}{{ sensor.last_value }}{% else %}없음{% endif %}</td>
-      <td style="width: 107px; height:40px; text-align: center;">
-          {% if sensor.low_threshold != None %}{{ sensor.low_threshold|floatformat:"0" }}{% else %}X{% endif %}
+    </tbody>
+</table>
+        {% for sensor in sensors %}
+            {% if sensor.sensor_node == sensor_node %}
+<br/>
+{% if sensor.type == 0 %}온도{% endif %}
+{% if sensor.type == 1 %}습도{% endif %}
+<table width="100%" border="1" cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+        <td style="width: 100px; text-align: center;">값</td>
+        <td style="text-align: center;">{% if not sensor.inactive %}{{ sensor.last_value }}{% else %}없음{% endif %}</td>
+    </tr>
+    <tr>
+        <td style="width: 100px; text-align:center;">범위</td>
+        <td style="text-align: center;">
+            {% if sensor.low_threshold != None %}{{ sensor.low_threshold|floatformat:"0" }}{% else %}없음{% endif %}
                 ~
-                {% if sensor.high_threshold != None %}{{ sensor.high_threshold|floatformat:"0" }}{% else %}X{% endif %}
-      </td>
-      <td style="width: 55px; height:40px; text-align: center;">{% if not sensor.inactive %}O{% else %}X{% endif %}</td>
+                {% if sensor.high_threshold != None %}{{ sensor.high_threshold|floatformat:"0" }}{% else %}없음{% endif %}
+        </td>
     </tr>
-
-    {% endfor %}
+    <tr>
+        <td style="width: 100px; text-align:center;">동작</td>
+        <td style="text-align: center;">{% if not sensor.inactive %}동작중{% else %}동작안함{% endif %}</td>
+    </tr>
   </tbody>
 </table>
-* 센서를 선택하면 그래프를 볼 수 있습니다.
+            {% endif %}
+        {% endfor %}
         </div>
         </div>
     </div>
 </div>
+{% endfor %}
 {% endblock %}
 {% block js_footer %}
 jQuery(document).ready(function($) {

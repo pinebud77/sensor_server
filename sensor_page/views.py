@@ -38,7 +38,7 @@ mobile_uas = [
     'wapr','webc','winw','winw','xda','xda-'
 ]
 
-mobile_ua_hints = [ 'SymbianOS', 'Opera Mini', 'iPhone' ]
+mobile_ua_hints = ['SymbianOS', 'Opera Mini', 'iPhone', 'Android']
 
 
 def mobile_browser(request):
@@ -714,6 +714,7 @@ def sensor_list(request):
     context = RequestContext(request)
 
     phone_numbers = []
+    sensor_nodes = []
     sensors = []
 
     cur_time = datetime.datetime.utcnow()
@@ -730,6 +731,7 @@ def sensor_list(request):
         pass
 
     for sensor_node in SensorNode.objects.filter(user=request.user):
+        sensor_nodes.append(sensor_node)
         for sensor in Sensor.objects.filter(sensor_node=sensor_node):
             sensor.sensor_node.reporting_period /= 60
             try:
@@ -749,6 +751,7 @@ def sensor_list(request):
         'user': request.user,
         'username': request.user.username,
         'phone_numbers': phone_numbers,
+        'sensor_nodes': sensor_nodes,
         'sensors': sensors,
     }
     if not mobile_browser(request):

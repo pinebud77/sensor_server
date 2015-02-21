@@ -24,20 +24,42 @@
 {% block post_title %}센서노드 : {{ sensor_node.user.username }} - {{ sensor_node.name }}{% endblock %}
 
 {% block post_entry %}
-MAC : {{ sensor_node.mac_address }}<br/>
-보고주기 : {{ sensor_node.reporting_period }}분<br/>
-정지시 알람 : {{ sensor_node.warning_period }}분<br/>
+<table  width="100%" border="1" cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+        <td style="width: 100px; text-align: center;">MAC</td>
+        <td style="text-align: center;">{{ sensor_node.mac_address }}</td>
+    </tr>
+    <tr>
+        <td style="width: 100px; text-align: center;">보고주기</td>
+        <td style="text-align: center;">{{ sensor_node.reporting_period }}분</td>
+    </tr>
+    <tr>
+        <td style="width: 100px; text-align: center;">정지시 알람</td>
+        <td style="text-align: center;">{{ sensor_node.warning_period }}분</td>
+    </tr>
+    </tbody>
+</table>
+
 <br/>
+
 {% for sensor in sensors %}
-    형식 :
-    {% if sensor.type == 0 %}
-        온도
-    {% endif %}
-    {% if sensor.type == 1 %}
-        습도
-    {% endif %}
-    <br/>
-    제한(
+<table width="100%" border="1" cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+        <td style="width: 100px; text-align: center;">형식</td>
+        <td style="text-align: center;">
+            {% if sensor.type == 0 %}
+                온도
+            {% endif %}
+            {% if sensor.type == 1 %}
+                습도
+            {% endif %}
+        </td>
+    </tr>
+    <tr>
+        <td style="width: 100px; text-align: center;">제한</td>
+        <td style="text-align: center;">
     {% if sensor.low_threshold != None %}
     {{ sensor.low_threshold }}
     {% else %}
@@ -49,13 +71,16 @@ MAC : {{ sensor_node.mac_address }}<br/>
     {% else %}
     없음
     {% endif %}
-    )
-    <br/>
+        </td>
+</tr>
+    </tbody>
+</table>
 
     {% if sensor.pic %}
         {{ sensor.pic|safe }}
     {% else %}
         범위안에 센서 데이터가 없습니다.
+        <br/>
     {% endif %}
 <br/>
 {% if display_fmt != 'hour' %}
