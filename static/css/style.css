@@ -912,7 +912,7 @@ ul.links li i.tags {
 .footer{
 	background:url(../images/back2.png) no-repeat top;
 	width:100%;
-	min-height:60px;
+	min-height:30px;
 	display:block;
 	background-size:cover;
 	padding:15em 0 0;

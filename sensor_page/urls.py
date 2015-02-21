@@ -4,6 +4,7 @@ from sensor_page import views
 urlpatterns = patterns('',
                        url(r'^login/', views.login_page),
                        url(r'^userinfo/', views.sensor_list),
+                       url(r'^contact/', views.contact_page),
                        url(r'^admin/', views.admin_page),
                        url(r'^applogin/', views.app_login_page),
                        url(r'^appregister/', views.app_register_page),

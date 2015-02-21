@@ -1,0 +1,53 @@
+{% extends "base_kitchen.html" %}
+
+{% block title %}초기화면{% endblock %}
+
+{% block login_form %}{% endblock %}
+
+{% block post_title %} {{ block.super }} {% endblock %}
+
+{% block post_entry %} {{ block.super }} {% endblock %}
+
+{% block addition %}
+
+    <div class="container">
+    <div class="about">
+    <div class="about-top">
+    <h3>Why Do I Maintain This Page?</h3>
+    <div class="top-about">
+        <li>For Fun</li>
+        <li>Arduino trial</li>
+        <li>Django + App Engine test</li>
+    </div>
+    </div>
+    </div>
+    </div>
+
+    <div class="container">
+    <div class="about">
+    <div class="about-top">
+    <h3>Current Functionality</h3>
+    <div class="top-about">
+        <li>SMS on sensor out of proper range</li>
+        <li>Graph output</li>
+        <li>OTL..</li>
+    </div>
+    </div>
+    </div>
+    </div>
+
+
+    <div class="container">
+    <div class="about">
+    <div class="about-top">
+    <h3>Todo List</h3>
+    <div class="top-about">
+        <li>Mobile page format</li>
+        <li>Interface for user configuration</li>
+        <li>cleaner site design</li>
+        <li>graph sort out</li>
+    </div>
+    </div>
+    </div>
+    </div>
+{% endblock %}

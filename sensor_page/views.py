@@ -97,15 +97,9 @@ def login_page(request):
 
         user = authenticate(username=username, password=password)
         if not user:
-            if not mobile_browser(request):
-                return render_to_response('sensor_page/nouser.html')
-            else:
-                return render_to_response('sensor_mobile_page/nouser.html')
+            return render_to_response('kitchen_theme/nouser.html')
         if not user.is_active:
-            if not mobile_browser(request):
-                return render_to_response('sensor_page/inact_user.html')
-            else:
-                return render_to_response('sensor_mobilepage/inact_user.html')
+            return render_to_response('kitchen_theme/inact_user.html')
         login(request, user)
         logging.info(u'user logged in : ' + unicode(user))
         return redirect('/sensor/userinfo/')
@@ -632,8 +626,8 @@ def dynamic_png(sensor, display_fmt, time_offset, is_mobile=False):
     mpl.rcParams['savefig.facecolor'] = 'white'
 
     fig = Figure(figsize=[7, 4])
-    ax = fig.add_axes([0.1, 0.2, 0.85, 0.75], axisbg='white')
-    font = {'size': 11}
+    ax = fig.add_axes([0.07, 0.2, 0.92, 0.75], axisbg='white')
+    font = {'size': 10}
     mpl.rc('font', **font)
     fig.patch.set_alpha(1)
 
@@ -679,13 +673,10 @@ def sensor_node_page(request, sensor_node_id, display_fmt="day", time_offset=0):
     try:
         sensor_node = SensorNode.objects.get(id=int(sensor_node_id))
     except SensorNode.DoesNotExist:
-        return render_to_response('sensor_page/no_sensor_node.html')
+        return render_to_response('kitchen_theme/no_sensor_node.html')
 
     if not request.user.is_staff and request.user != sensor_node.user:
-        if not mobile_browser(request):
-            return render_to_response('sensor_page/no_privilege.html')
-        else:
-            return render_to_response('sensor_mobile_page/no_privilege.html')
+        return render_to_response('kitchen_theme/no_privilege.html')
 
     for sensor in Sensor.objects.filter(sensor_node=sensor_node):
         sensor.pic = dynamic_png(sensor, display_fmt, int(time_offset), is_mobile=mobile_browser(request))
@@ -701,10 +692,7 @@ def sensor_node_page(request, sensor_node_id, display_fmt="day", time_offset=0):
         'time_offset_next': int(time_offset) - 1,
     }
 
-    if not mobile_browser(request):
-        return render_to_response('sensor_page/sensor_node.html', context_dict, context)
-    else:
-        return render_to_response('sensor_mobile_page/sensor_node.html', context_dict, context)
+    return render_to_response('kitchen_theme/sensor_node.html', context_dict, context)
 
 
 def sensor_list(request):
@@ -732,8 +720,9 @@ def sensor_list(request):
 
     for sensor_node in SensorNode.objects.filter(user=request.user):
         sensor_nodes.append(sensor_node)
+        sensor_node.reporting_period /= 60
+        sensor_node.warning_period /= 60
         for sensor in Sensor.objects.filter(sensor_node=sensor_node):
-            sensor.sensor_node.reporting_period /= 60
             try:
                 last_measure = MeasureEntry.objects.filter(sensor=sensor).order_by('-date')[0]
                 sensor.last_value = last_measure.value
@@ -754,33 +743,25 @@ def sensor_list(request):
         'sensor_nodes': sensor_nodes,
         'sensors': sensors,
     }
-    if not mobile_browser(request):
-        return render_to_response('sensor_page/sensor_list.html', context_dict, context)
-    else:
-        return render_to_response('sensor_mobile_page/sensor_list.html', context_dict, context)
+    return render_to_response('kitchen_theme/sensor_list.html', context_dict, context)
 
 
 def index_page(request):
     context = RequestContext(request)
 
-    context_dict = {
-        'user': request.user,
-    }
+    return render_to_response('kitchen_theme/index_page.html', {}, context)
 
-    if not mobile_browser(request):
-        return render_to_response('sensor_page/index_page.html', context_dict, context)
-    else:
-        return render_to_response('sensor_mobile_page/index_page.html', context_dict, context)
+def contact_page(request):
+    context = RequestContext(request)
+
+    return render_to_response('kitchen_theme/contact.html', {}, context)
 
 
 def admin_page(request):
     context = RequestContext(request)
 
     if not request.user.is_staff:
-        if not mobile_browser(request):
-            return render_to_response('sensor_page/no_privilege.html')
-        else:
-            return render_to_response('sensor_mobile_page/no_privilege.html')
+        return render_to_response('kitchen_theme/no_privilege.html')
 
     sensor_nodes = SensorNode.objects.all()
 
