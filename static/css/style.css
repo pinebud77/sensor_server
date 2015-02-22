@@ -81,6 +81,8 @@ h1,h2,h3,h4,h5,h6,label,p{
 /*----*/
 .top-menu{
 	margin-top:2em;
+    min-width: 0;
+    width: 850px;
 }
 .top-menu ul li{
 	display: inline-block;
@@ -912,7 +914,6 @@ ul.links li i.tags {
 .footer{
 	background:url(../images/back2.png) no-repeat top;
 	width:100%;
-	min-height:30px;
 	display:block;
 	background-size:cover;
 	padding:15em 0 0;
