@@ -692,7 +692,10 @@ def sensor_node_page(request, sensor_node_id, display_fmt="day", time_offset=0):
         'time_offset_next': int(time_offset) - 1,
     }
 
-    return render_to_response('kitchen_theme/sensor_node.html', context_dict, context)
+    if mobile_browser(request):
+        return render_to_response('kitchen_theme/sensor_node.html', context_dict, context)
+    else:
+        return render_to_response('kitchen_theme/sensor_node_pc.html', context_dict, context)
 
 
 def sensor_list(request):
@@ -734,6 +737,9 @@ def sensor_list(request):
             else:
                 sensor.inactive = False
 
+            sensor.sensor_node.reporting_period /= 60
+            sensor.sensor_node.warning_period /= 60
+
             sensors.append(sensor)
 
     context_dict = {
@@ -743,13 +749,20 @@ def sensor_list(request):
         'sensor_nodes': sensor_nodes,
         'sensors': sensors,
     }
-    return render_to_response('kitchen_theme/sensor_list.html', context_dict, context)
+    if mobile_browser(request):
+        return render_to_response('kitchen_theme/sensor_list.html', context_dict, context)
+    else:
+        return render_to_response('kitchen_theme/sensor_list_pc.html', context_dict, context)
 
 
 def index_page(request):
     context = RequestContext(request)
 
-    return render_to_response('kitchen_theme/index_page.html', {}, context)
+    context_dict = {
+        'user': request.user,
+    }
+
+    return render_to_response('kitchen_theme/index_page.html', context_dict, context)
 
 def contact_page(request):
     context = RequestContext(request)

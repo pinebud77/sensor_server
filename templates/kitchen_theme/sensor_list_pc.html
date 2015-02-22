@@ -1,0 +1,94 @@
+{% extends "base_kitchen.html" %}
+
+{% block title %}Sensor List for the User : {{ username }}{% endblock %}
+
+{% block login_form %}
+    {% if user.is_authenticated %}
+        <div class="container">
+        <div class="about">
+        <div class="about-top">
+        <h3>User</h3>
+        <div class="top-about">
+{{ username }} <a href="/sensor/logout/" class="more">로그아웃</a>
+        </div>
+        </div>
+        </div>
+        </div>
+    {% else %}
+        {{ block.super }}
+    {% endif %}
+{% endblock %}
+
+
+{% block post_title %}{% endblock %}
+
+{% block post_entry %}{% endblock %}
+
+{% block addition %}
+<div class="container">
+    <div class="about">
+        <div class="about-top">
+            <h3>Phone Number</h3>
+        <div class="top-about">
+            {% if phone_numbers %}
+                {% for number in phone_numbers %}
+                <li>{{ number }}</li>
+                {% endfor %}
+            {% else %}
+                전화번호가 등록되지 않았습니다.
+            {% endif %}
+        </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="about">
+        <div class="about-top">
+        <h3>센서 리스트</h3>
+        <div class=""top-about">
+        <table width="100%" border="1" cellpadding="2" cellspacing="2">
+        <tbody>
+            <tr>
+                <td style="text-align: center; height: 40px">노드 이름</td>
+                <td style="text-align: center; height: 40px">그래프</td>
+                <td style="text-align: center; height: 40px">종류</td>
+                <td style="text-align: center; height: 40px">리포트 주기</td>
+                <td style="text-align: center; height: 40px">알람 주기</td>
+                <td style="text-align: center; height: 40px">값</td>
+                <td style="text-align: center; height: 40px">범위</td>
+                <td style="text-align: center; height: 40px">동작여부</td>
+            </tr>
+        {% for sensor in sensors %}
+            <tr>
+                <td style="text-align: center; height: 40px">{{ sensor.sensor_node.name }}</td>
+                <td style="text-align: center; height: 40px"><a href="/sensor/sensornode/{{ sensor.sensor_node.id }}/" class="more">그래프</a></td>
+                <td style="text-align: center; height: 40px">
+                    {% if sensor.type == 0 %}온도{% endif %}
+                    {% if sensor.type == 1 %}습도{% endif %}
+                </td>
+                <td style="text-align: center; height: 40px">{{ sensor.sensor_node.reporting_period }}분</td>
+                <td style="text-align: center; height: 40px">{{ sensor.sensor_node.warning_period }}분</td>
+                <td style="text-align: center; height: 40px">{% if not sensor.inactive %}{{ sensor.last_value }}{% else %}없음{% endif %}</td>
+                <td style="text-align: center; height: 40px">
+                    {% if sensor.low_threshold != None %}{{ sensor.low_threshold|floatformat:"0" }}{% else %}없음{% endif %}
+                    ~
+                    {% if sensor.high_threshold != None %}{{ sensor.high_threshold|floatformat:"0" }}{% else %}없음{% endif %}
+                </td>
+                <td style="text-align: center; height: 40px">{% if not sensor.inactive %}동작중{% else %}동작안함{% endif %}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+        </table>
+        </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block js_footer %}
+jQuery(document).ready(function($) {
+    $(".clickable-row").click(function() {
+        window.document.location = $(this).data("href");
+    });
+});
+{% endblock %}

@@ -24,31 +24,35 @@
 {% block post_title %}센서노드 : {{ sensor_node.user.username }} - {{ sensor_node.name }}{% endblock %}
 
 {% block post_entry %}
-<table  width="100%" border="1" cellpadding="2" cellspacing="2">
+<table  width="560px" border="1" cellpadding="2" cellspacing="2">
   <tbody>
     <tr>
-        <td style="width: 100px; text-align: center;">MAC</td>
-        <td style="text-align: center;">{{ sensor_node.mac_address }}</td>
+        <td style="width: 100px; height: 35px; text-align: center;">항목</td>
+        <td style="height: 35px; text-align: center;">MAC</td>
+        <td style="height: 35px; text-align: center;">보고주기</td>
+        <td style="height: 35px; text-align: center;">정지시알람</td>
     </tr>
     <tr>
-        <td style="width: 100px; text-align: center;">보고주기</td>
-        <td style="text-align: center;">{{ sensor_node.reporting_period }}분</td>
-    </tr>
-    <tr>
-        <td style="width: 100px; text-align: center;">정지시 알람</td>
-        <td style="text-align: center;">{{ sensor_node.warning_period }}분</td>
+        <td style="width: 100px; height: 35px; text-align: center;">값</td>
+        <td style="height: 35px; text-align: center;">{{ sensor_node.mac_address }}</td>
+        <td style="height: 35px; text-align: center;">{{ sensor_node.reporting_period }}분</td>
+        <td style="height: 35px; text-align: center;">{{ sensor_node.warning_period }}분</td>
     </tr>
     </tbody>
 </table>
-
 <br/>
 
 {% for sensor in sensors %}
-<table width="100%" border="1" cellpadding="2" cellspacing="2">
+<table width="560px" border="1" cellpadding="2" cellspacing="2">
   <tbody>
     <tr>
-        <td style="width: 100px; text-align: center;">형식</td>
-        <td style="text-align: center;">
+        <td style="width: 100px; height: 35px; text-align: center;">항목</td>
+        <td style="height: 35px; text-align: center;">형식</td>
+        <td style="height: 35px; text-align: center;">제한</td>
+    </tr>
+    <tr>
+        <td style="width: 100px; height: 35px; text-align: center;">값</td>
+        <td style="width: 100px; text-align: center;">
             {% if sensor.type == 0 %}
                 온도
             {% endif %}
@@ -56,23 +60,20 @@
                 습도
             {% endif %}
         </td>
-    </tr>
-    <tr>
-        <td style="width: 100px; text-align: center;">제한</td>
         <td style="text-align: center;">
-    {% if sensor.low_threshold != None %}
-    {{ sensor.low_threshold }}
-    {% else %}
-    없음
-    {% endif %}
-    ~
-    {% if sensor.high_threshold != None %}
-    {{ sensor.high_threshold }}
-    {% else %}
-    없음
-    {% endif %}
+            {% if sensor.low_threshold != None %}
+            {{ sensor.low_threshold }}
+            {% else %}
+            없음
+            {% endif %}
+            ~
+            {% if sensor.high_threshold != None %}
+            {{ sensor.high_threshold }}
+            {% else %}
+            없음
+            {% endif %}
         </td>
-</tr>
+    </tr>
     </tbody>
 </table>
 
