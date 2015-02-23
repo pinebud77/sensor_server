@@ -317,14 +317,17 @@ i.dolor{
     margin-right: auto;
 }
 .about-top {
-	padding: 6em 0;
+	padding: 1em 0;
 }
 .about-top h3{
 	font-size:2.2em;
 	color:#222;
 	text-transform:uppercase;
 	font-family: 'Oswald', sans-serif;
-	padding: 0 0.4em 1em;
+	padding: 1em 0 0;
+}
+.top-about {
+    padding: 2em 0 1em;
 }
 .top-about h5{
 	font-size:1.5em;
@@ -353,7 +356,7 @@ a.more:hover{
 	font-size:1.2em;
 	color:#222;
 	line-height:1.7em;
-	margin:1em 0 2em;
+	margin: 3em 0 0.5em;
 }
 .left-sit h6{
 	font-size:1.3em;
