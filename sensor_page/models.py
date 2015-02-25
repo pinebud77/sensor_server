@@ -29,9 +29,8 @@ class UserContact(models.Model):
     send_sms = models.BooleanField(default=True)
 
     PHONE_TYPE_CHOICES = (
-        (0, '피쳐폰'),
-        (1, '안드로이드'),
-        (2, '아이폰'),
+        (1, u'안드로이드'),
+        (2, u'아이폰'),
     )
     phone_type = models.IntegerField(choices=PHONE_TYPE_CHOICES, default=0)
 
@@ -64,13 +63,32 @@ class Sensor(models.Model):
     sensor_node = models.ForeignKey(SensorNode, db_index=True)
 
     SENSOR_TYPE_CHOICES = (
-        (0, '온도'),
-        (1, '습도'),
-        (2, '압력'),
+        (0, u'온도'),
+        (1, u'습도'),
+        (2, u'CO2'),
+        (3, u'먼지'),
     )
+
+    SENSOR_METRICS = (
+        u'℃',
+        u'%',
+        u'ppm',
+        u'0.1mg/m^3',
+    )
+
     type = models.IntegerField(choices=SENSOR_TYPE_CHOICES)
     high_threshold = models.FloatField(default=None, null=True, blank=True)
     low_threshold = models.FloatField(default=None, null=True, blank=True)
+
+    def get_type_string(self):
+        for tup in self.SENSOR_TYPE_CHOICES:
+            if tup[0] == self.type:
+                return tup[1]
+
+        return u'??'
+
+    def get_metric_string(self):
+        return self.SENSOR_METRICS[self.type]
 
     def __unicode__(self):
         desc = self.sensor_node.user.username + ':'

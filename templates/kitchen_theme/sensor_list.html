@@ -69,13 +69,12 @@
         {% for sensor in sensors %}
             {% if sensor.sensor_node == sensor_node %}
 <br/>
-{% if sensor.type == 0 %}온도{% endif %}
-{% if sensor.type == 1 %}습도{% endif %}
+{{ sensor.get_type_string }}
 <table width="100%" border="1" cellpadding="2" cellspacing="2">
   <tbody>
     <tr>
         <td style="width: 100px; text-align: center;">값</td>
-        <td style="text-align: center;">{% if not sensor.inactive %}{{ sensor.last_value }}{% else %}없음{% endif %}</td>
+        <td style="text-align: center;">{% if not sensor.inactive %}{{ sensor.last_value }}{{ sensor.get_metric_string }}{% else %}없음{% endif %}</td>
     </tr>
     <tr>
         <td style="width: 100px; text-align:center;">범위</td>

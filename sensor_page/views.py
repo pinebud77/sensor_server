@@ -409,7 +409,7 @@ def handle_first_and_resume(measure, first):
         else:
             text = u'센서가 다시 데이터를 보냈습니다. : '
         text += sensor_node.name + u' : '
-        text += get_sensor_type_str(measure.sensor.type) + u' : '
+        text += measure.sensor.get_type_string() + u' : '
         text += '%.1f' % measure.value
 
         send_sms_for_node(sensor_node, text)
@@ -430,7 +430,7 @@ def check_range(measure):
         text = u'범위를 넘었습니다. '
         text += sensor.sensor_node.name
         text += u' : '
-        text += get_sensor_type_str(measure.sensor.type) + u' : '
+        text += measure.sensor.get_type_string() + u' : '
         text += '%.1f' % measure.value
 
         send_sms_for_node(sensor.sensor_node, text)

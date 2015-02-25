@@ -64,12 +64,11 @@
                 <td style="text-align: center; height: 40px">{{ sensor.sensor_node.name }}</td>
                 <td style="text-align: center; height: 40px"><a href="/sensor/sensornode/{{ sensor.sensor_node.id }}/" class="more">그래프</a></td>
                 <td style="text-align: center; height: 40px">
-                    {% if sensor.type == 0 %}온도{% endif %}
-                    {% if sensor.type == 1 %}습도{% endif %}
+                    {{ sensor.get_type_string }}
                 </td>
                 <td style="text-align: center; height: 40px">{{ sensor.sensor_node.reporting_period }}분</td>
                 <td style="text-align: center; height: 40px">{{ sensor.sensor_node.warning_period }}분</td>
-                <td style="text-align: center; height: 40px">{% if not sensor.inactive %}{{ sensor.last_value }}{% else %}없음{% endif %}</td>
+                <td style="text-align: center; height: 40px">{% if not sensor.inactive %}{{ sensor.last_value }}{{ sensor.get_metric_string }}{% else %}없음{% endif %}</td>
                 <td style="text-align: center; height: 40px">
                     {% if sensor.low_threshold != None %}{{ sensor.low_threshold|floatformat:"0" }}{% else %}없음{% endif %}
                     ~

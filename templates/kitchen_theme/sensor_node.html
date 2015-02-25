@@ -49,12 +49,7 @@
     <tr>
         <td style="width: 100px; text-align: center;">형식</td>
         <td style="text-align: center;">
-            {% if sensor.type == 0 %}
-                온도
-            {% endif %}
-            {% if sensor.type == 1 %}
-                습도
-            {% endif %}
+            {{ sensor.get_type_string }}
         </td>
     </tr>
     <tr>
