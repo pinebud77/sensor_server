@@ -56,9 +56,7 @@ class SensorNode(models.Model):
     def __unicode__(self):
         desc = self.user.username + u' ' + self.name + u' MAC(' + self.mac_address + u')'
         if self.warning_count:
-            desc += u' warning(' + unicode(self.warning_count) + u')'
-        if self.first_report_count:
-            desc += u' reset_count(' + unicode(self.first_report_count) + u')'
+            desc += u' (not working)'
         return desc
 
 

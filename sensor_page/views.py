@@ -727,7 +727,10 @@ def sensor_list(request):
         sensor_node.warning_period /= 60
         for sensor in Sensor.objects.filter(sensor_node=sensor_node):
             try:
-                last_measure = MeasureEntry.objects.filter(sensor=sensor).order_by('-date')[0]
+                try:
+                    last_measure = MeasureEntry.objects.filter(sensor=sensor).order_by('-date')[0]
+                except IndexError:
+                    continue
                 sensor.last_value = last_measure.value
             except MeasureEntry.DoesNotExist:
                 sensor.last_value = None
