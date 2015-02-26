@@ -729,9 +729,9 @@ def sensor_list(request):
             try:
                 try:
                     last_measure = MeasureEntry.objects.filter(sensor=sensor).order_by('-date')[0]
+                    sensor.last_value = last_measure.value
                 except IndexError:
-                    continue
-                sensor.last_value = last_measure.value
+                    sensor.last_value = None
             except MeasureEntry.DoesNotExist:
                 sensor.last_value = None
 

@@ -54,7 +54,9 @@ class SensorNode(models.Model):
 
     def __unicode__(self):
         desc = self.user.username + u' ' + self.name + u' MAC(' + self.mac_address + u')'
-        if self.warning_count:
+        if self.warning_start is None:
+            desc += u' (not working)'
+        elif self.warning_count:
             desc += u' (not working)'
         return desc
 
@@ -73,7 +75,7 @@ class Sensor(models.Model):
         u'℃',
         u'%',
         u'ppm',
-        u'0.1mg/m^3',
+        u'ug/m^3',
     )
 
     type = models.IntegerField(choices=SENSOR_TYPE_CHOICES)
@@ -93,10 +95,7 @@ class Sensor(models.Model):
     def __unicode__(self):
         desc = self.sensor_node.user.username + ':'
         desc += self.sensor_node.name + ':'
-        if self.type == 0:
-            desc += u'(온도)'
-        elif self.type == 1:
-            desc += u'(습도)'
+        desc += self.get_type_string()
         return desc
 
 
