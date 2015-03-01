@@ -53,6 +53,12 @@
         </td>
     </tr>
     <tr>
+        <td style="width: 100px; text-align: center;">단위</td>
+        <td style="text-align: center;">
+            {{ sensor.get_metric_string }}
+        </td>
+    </tr>
+    <tr>
         <td style="width: 100px; text-align: center;">제한</td>
         <td style="text-align: center;">
     {% if sensor.low_threshold != None %}

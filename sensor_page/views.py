@@ -575,14 +575,13 @@ def dynamic_png(sensor, display_fmt, time_offset, is_mobile=False):
 
     y_max = -1000.0
     y_min = 1000.0
-    margin = 1.0
 
     if sensor.high_threshold is not None:
         highs = [sensor.high_threshold, sensor.high_threshold]
-        y_max = sensor.high_threshold + margin
+        y_max = sensor.high_threshold
     if sensor.low_threshold is not None:
         lows = [sensor.low_threshold, sensor.low_threshold]
-        y_min = sensor.low_threshold - margin
+        y_min = sensor.low_threshold
 
     date_max = date_max.replace(tzinfo=None)
     date_min = date_min.replace(tzinfo=None)
@@ -604,14 +603,17 @@ def dynamic_png(sensor, display_fmt, time_offset, is_mobile=False):
         values.append(measure.value)
 
         if date_min <= measure.date <= date_max:
-            if measure.value > y_max - margin:
-                y_max = measure.value + margin
-            if measure.value < y_min + margin:
-                y_min = measure.value - margin
-            margin = (y_max - y_min) * 0.1
-            if margin < 1.0:
-                margin = 1.0
+            if measure.value > y_max:
+                y_max = measure.value
+            if measure.value < y_min:
+                y_min = measure.value
             data_in_range = True
+
+    margin = (y_max - y_min) * 0.05
+    if margin < 2:
+        margin = 2
+    y_max += margin
+    y_min -= margin
 
     if not data_in_range:
         return None
@@ -735,7 +737,7 @@ def sensor_list(request):
             except MeasureEntry.DoesNotExist:
                 sensor.last_value = None
 
-            if cur_time > sensor.sensor_node.warning_start:
+            if sensor.sensor_node.warning_start and cur_time > sensor.sensor_node.warning_start:
                 sensor.inactive = True
             else:
                 sensor.inactive = False
