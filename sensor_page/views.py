@@ -556,7 +556,7 @@ def dynamic_png(sensor, display_fmt, time_offset, is_mobile=False):
         measure_entries = MeasureEntry.objects.defer('sensor').filter(sensor=sensor,
                                                       date__gt=(date_max - delta - datetime.timedelta(hours=1)),
                                                       date__lt=(date_max + datetime.timedelta(hours=1))
-                                                        ).order_by('-date')
+                                                        ).order_by('date')
     except MeasureEntry.DoesNotExist:
         pass
 
