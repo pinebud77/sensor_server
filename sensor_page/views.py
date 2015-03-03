@@ -586,7 +586,7 @@ def dynamic_png(sensor, display_fmt, time_offset, is_mobile=False):
     date_max = date_max.replace(tzinfo=None)
     date_min = date_min.replace(tzinfo=None)
 
-    warning_delta = datetime.timedelta(seconds=sensor.sensor_node.warning_period*2)
+    warning_delta = datetime.timedelta(seconds=(sensor.sensor_node.warning_period*2))
 
     date_max += tz.utcoffset(date_max)
     date_min += tz.utcoffset(date_min)
